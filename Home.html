@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Suite de Entrenamiento de Tríadas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; touch-action: manipulation; }
+        
+        /* --- ANIMACIONES --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .animate-bounce-in { animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* --- PIANO CSS --- */
+        .piano-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            height: 150px;
+            background-color: #111827;
+            border-radius: 0 0 1rem 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            margin: 0 auto;
+        }
+        
+        .white-keys-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            height: 100%;
+            width: 100%;
+            padding: 0 2px 4px 2px;
+            gap: 2px;
+        }
+
+        .key {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 8px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.1s, transform 0.05s;
+        }
+
+        .key.white {
+            background-color: white;
+            color: #374151;
+            border-radius: 0 0 6px 6px;
+            height: 100%;
+            box-shadow: inset 0 -5px 0 rgba(0,0,0,0.1);
+        }
+        
+        .key.white:active {
+            background-color: #e5e7eb;
+            transform: scale(0.98);
+        }
+
+        .key.black {
+            position: absolute;
+            top: 0;
+            height: 60%;
+            width: 10%;
+            background-color: #1f2937;
+            color: #9ca3af;
+            border-radius: 0 0 4px 4px;
+            z-index: 10;
+            box-shadow: inset 0 -3px 0 rgba(255,255,255,0.1), 2px 2px 5px rgba(0,0,0,0.3);
+            border: 1px solid #374151;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 8px;
+            text-align: center;
+        }
+
+        .key.black .label {
+            font-size: 0.65rem;
+            pointer-events: none;
+            line-height: 1;
+            width: 100%;
+            text-align: center;
+        }
+
+        .key.black:active {
+            transform: scale(0.98);
+            background-color: #111827;
+        }
+
+        /* Posiciones Teclas Negras */
+        .key.black[data-pos="1"] { left: 10%; }
+        .key.black[data-pos="2"] { left: 24.5%; }
+        .key.black[data-pos="3"] { left: 53%; }
+        .key.black[data-pos="4"] { left: 67.5%; }
+        .key.black[data-pos="5"] { left: 82%; }
+
+        /* Estados del Juego */
+        .key.root-note { background-color: #3b82f6 !important; color: white !important; }
+        .key.correct-note { background-color: #22c55e !important; color: white !important; }
+        .key.wrong-note { background-color: #ef4444 !important; color: white !important; }
+
+        .menu-card {
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .menu-card:active { transform: scale(0.98); }
+        
+        /* Estilos para el panel de selección sin scroll */
+        .selection-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        
+        /* Espacio reservado para botón Next */
+        .next-btn-container {
+            height: 3.5rem; /* Altura fija */
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .next-btn-placeholder {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white h-screen flex flex-col overflow-hidden selection:bg-blue-500 selection:text-white">
+
+    <!-- ==================== PANTALLA MENÚ PRINCIPAL ==================== -->
+    <div id="main-menu" class="flex-1 flex flex-col p-4 fade-in max-w-4xl mx-auto w-full h-full overflow-y-auto">
+        
+        <div class="text-center mt-4 mb-6">
+            <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
+                Master de Tríadas
+            </h1>
+            <p class="text-gray-400 text-xs md:text-sm">Selecciona tu modo de entrenamiento</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl mx-auto mb-4 flex-shrink-0">
+            <button onclick="app.initGame('M')" class="menu-card bg-gray-900 border border-gray-800 p-4 rounded-xl flex items-center gap-3 hover:bg-gray-800 hover:border-blue-500/50">
+                <div class="bg-blue-500/10 text-blue-400 p-2 rounded-lg text-xl font-bold w-10 h-10 flex items-center justify-center">M</div>
+                <div class="text-left">
+                    <h3 class="font-bold text-base text-white">Mayor</h3>
+                    <p class="text-[10px] text-gray-500">1 - 3 - 5</p>
+                </div>
+            </button>
+
+            <button onclick="app.initGame('m')" class="menu-card bg-gray-900 border border-gray-800 p-4 rounded-xl flex items-center gap-3 hover:bg-gray-800 hover:border-indigo-500/50">
+                <div class="bg-indigo-500/10 text-indigo-400 p-2 rounded-lg text-xl font-bold w-10 h-10 flex items-center justify-center">m</div>
+                <div class="text-left">
+                    <h3 class="font-bold text-base text-white">Menor</h3>
+                    <p class="text-[10px] text-gray-500">1 - b3 - 5</p>
+                </div>
+            </button>
+
+            <button onclick="app.initGame('dim')" class="menu-card bg-gray-900 border border-gray-800 p-4 rounded-xl flex items-center gap-3 hover:bg-gray-800 hover:border-yellow-500/50">
+                <div class="bg-yellow-500/10 text-yellow-400 p-2 rounded-lg text-xl font-bold w-10 h-10 flex items-center justify-center">°</div>
+                <div class="text-left">
+                    <h3 class="font-bold text-base text-white">Disminuida</h3>
+                    <p class="text-[10px] text-gray-500">1 - b3 - b5</p>
+                </div>
+            </button>
+
+            <button onclick="app.initGame('aug')" class="menu-card bg-gray-900 border border-gray-800 p-4 rounded-xl flex items-center gap-3 hover:bg-gray-800 hover:border-red-500/50">
+                <div class="bg-red-500/10 text-red-400 p-2 rounded-lg text-xl font-bold w-10 h-10 flex items-center justify-center">+</div>
+                <div class="text-left">
+                    <h3 class="font-bold text-base text-white">Aumentada</h3>
+                    <p class="text-[10px] text-gray-500">1 - 3 - #5</p>
+                </div>
+            </button>
+
+            <button onclick="app.initGame('master')" class="menu-card sm:col-span-2 bg-gradient-to-r from-gray-900 to-purple-900/20 border border-purple-500/30 p-4 rounded-xl flex items-center justify-center gap-4 hover:border-purple-500 transition-all mt-2">
+                <div class="text-2xl">🎓</div>
+                <div class="text-left">
+                    <h3 class="font-bold text-lg text-purple-300">Modo Maestro</h3>
+                    <p class="text-[10px] text-gray-400">Mezcla aleatoria de todas las cualidades.</p>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== PANTALLA DE JUEGO ==================== -->
+    <div id="game-container" class="hidden flex-col h-full bg-gray-900 relative">
+        
+        <!-- Navbar -->
+        <div class="bg-gray-800 border-b border-gray-700 p-3 flex items-center justify-between shadow-md shrink-0 z-20">
+            <button onclick="app.exitToMenu()" class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold py-1.5 px-3 rounded transition-colors flex items-center gap-1">
+                <span>↩ Menú</span>
+            </button>
+            <div id="mode-badge" class="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-900/20 px-2 py-1 rounded border border-blue-800">
+                MAYOR
+            </div>
+        </div>
+
+        <!-- Área Principal con Scroll si es necesario -->
+        <div class="flex-1 overflow-y-auto flex flex-col items-center">
+            
+            <!-- Panel de Selección (Dos Filas Fijas) -->
+            <div class="w-full bg-gray-900/50 border-b border-gray-800 p-4 flex flex-col items-center gap-3 shrink-0">
+                <!-- Fila Sostenidos -->
+                <div id="sharps-row" class="selection-grid"></div>
+                <!-- Separador Visual Sutil -->
+                <div class="w-full h-px bg-gray-800"></div>
+                <!-- Fila Bemoles -->
+                <div id="flats-row" class="selection-grid"></div>
+            </div>
+
+            <!-- Contenedor Juego -->
+            <div class="w-full max-w-md flex flex-col items-center p-4 flex-grow">
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-2 gap-8 w-full mb-6">
+                    <!-- Tiempo -->
+                    <div class="flex flex-col items-center bg-gray-800/50 p-2 rounded-lg border border-gray-700/50">
+                        <span class="text-[10px] text-gray-400 font-bold tracking-widest mb-1">TIEMPO</span>
+                        <span id="timer-display" class="font-mono font-bold text-white text-xl leading-none">00:00</span>
+                        <span class="text-[9px] text-gray-500 mt-1">RÉCORD: <span id="best-time" class="text-gray-300">00:00</span></span>
+                    </div>
+                    <!-- Racha -->
+                    <div class="flex flex-col items-center bg-gray-800/50 p-2 rounded-lg border border-gray-700/50">
+                        <span class="text-[10px] text-gray-400 font-bold tracking-widest mb-1">RACHA</span>
+                        <span id="streak-display" class="font-mono font-bold text-blue-400 text-xl leading-none">0</span>
+                        <span class="text-[9px] text-gray-500 mt-1">RÉCORD: <span id="best-streak" class="text-gray-300">0</span></span>
+                    </div>
+                </div>
+
+                <!-- Título Acorde -->
+                <div class="text-center mb-6 w-full">
+                    <h1 id="task-title" class="text-4xl md:text-5xl font-black text-white mb-3 drop-shadow-lg h-12 flex items-center justify-center">
+                        <!-- Contenido Dinámico -->
+                    </h1>
+                    <!-- Barra Progreso -->
+                    <div class="h-1.5 w-32 mx-auto bg-gray-700 rounded-full overflow-hidden">
+                        <div id="feedback-bar" class="h-full bg-gray-600 w-0 transition-all duration-200"></div>
+                    </div>
+                </div>
+
+                <!-- Piano -->
+                <div class="w-full flex-shrink-0 mb-6">
+                    <div class="piano-wrapper">
+                        <div class="white-keys-container">
+                            <div class="key white" id="key-C" data-note="C">C</div>
+                            <div class="key white" id="key-D" data-note="D">D</div>
+                            <div class="key white" id="key-E" data-note="E">E</div>
+                            <div class="key white" id="key-F" data-note="F">F</div>
+                            <div class="key white" id="key-G" data-note="G">G</div>
+                            <div class="key white" id="key-A" data-note="A">A</div>
+                            <div class="key white" id="key-B" data-note="B">B</div>
+                        </div>
+                        <!-- Teclas Negras -->
+                        <div class="key black" data-pos="1" data-sharp="C#" data-flat="Db"><span class="label"></span></div>
+                        <div class="key black" data-pos="2" data-sharp="D#" data-flat="Eb"><span class="label"></span></div>
+                        <div class="key black" data-pos="3" data-sharp="F#" data-flat="Gb"><span class="label"></span></div>
+                        <div class="key black" data-pos="4" data-sharp="G#" data-flat="Ab"><span class="label"></span></div>
+                        <div class="key black" data-pos="5" data-sharp="A#" data-flat="Bb"><span class="label"></span></div>
+                    </div>
+                </div>
+
+                <!-- Botón Siguiente (Espacio Reservado Fijo) -->
+                <div class="next-btn-container">
+                    <button id="next-btn" class="next-btn-placeholder w-full max-w-xs bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-1">
+                        Siguiente ➡
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Game Over -->
+    <div id="game-over-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-6 max-w-xs w-full text-center animate-bounce-in">
+            <div class="text-4xl mb-2">❌</div>
+            <h2 class="text-xl font-bold text-white mb-4">¡Racha Terminada!</h2>
+            
+            <div class="flex justify-between bg-gray-900/50 p-3 rounded-lg mb-4 text-sm">
+                <div>
+                    <div class="text-[10px] text-gray-500 font-bold">TIEMPO</div>
+                    <div id="modal-time" class="font-mono font-bold text-white"></div>
+                </div>
+                <div>
+                    <div class="text-[10px] text-gray-500 font-bold">RACHA</div>
+                    <div id="modal-score" class="font-mono font-bold text-blue-400"></div>
+                </div>
+            </div>
+
+            <button onclick="app.restartGame()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg mb-2 text-sm">Reintentar</button>
+            <button onclick="app.exitToMenu()" class="w-full bg-transparent hover:bg-gray-700 text-gray-400 font-bold py-2.5 rounded-lg text-sm">Salir</button>
+        </div>
+    </div>
+
+    <script>
+        const app = (() => {
+            // --- DATOS ---
+            const SHARPS = [
+                { name: "C", group: "sharps" }, { name: "G", group: "sharps" },
+                { name: "D", group: "sharps" }, { name: "A", group: "sharps" },
+                { name: "E", group: "sharps" }, { name: "B", group: "sharps" },
+                { name: "F#", group: "sharps" }, { name: "C#", group: "sharps" }
+            ];
+            const FLATS = [
+                { name: "F", group: "flats" }, { name: "Bb", group: "flats" },
+                { name: "Eb", group: "flats" }, { name: "Ab", group: "flats" },
+                { name: "Db", group: "flats" }, { name: "Gb", group: "flats" },
+                { name: "Cb", group: "flats" }
+            ];
+            const ALL_ROOTS = [...SHARPS, ...FLATS];
+
+            const CHORD_DATA = {
+                "C":  { M:["E","G"], m:["Eb","G"], dim:["Eb","Gb"], aug:["E","G#"] },
+                "G":  { M:["B","D"], m:["Bb","D"], dim:["Bb","Db"], aug:["B","D#"] },
+                "D":  { M:["F#","A"], m:["F","A"], dim:["F","Ab"], aug:["F#","A#"] },
+                "A":  { M:["C#","E"], m:["C","E"], dim:["C","Eb"], aug:["C#","E#"] },
+                "E":  { M:["G#","B"], m:["G","B"], dim:["G","Bb"], aug:["G#","B#"] },
+                "B":  { M:["D#","F#"], m:["D","F#"], dim:["D","F"], aug:["D#","Fx"] },
+                "F#": { M:["A#","C#"], m:["A","C#"], dim:["A","C"], aug:["A#","Cx"] },
+                "C#": { M:["E#","G#"], m:["E","G#"], dim:["E","G"], aug:["E#","Gx"] },
+                
+                "F":  { M:["A","C"], m:["Ab","C"], dim:["Ab","Cb"], aug:["A","C#"] },
+                "Bb": { M:["D","F"], m:["Db","F"], dim:["Db","Fb"], aug:["D","F#"] },
+                "Eb": { M:["G","Bb"], m:["Gb","Bb"], dim:["Gb","Bbb"], aug:["G","B"] },
+                "Ab": { M:["C","Eb"], m:["Cb","Eb"], dim:["Cb","Ebb"], aug:["C","E"] },
+                "Db": { M:["F","Ab"], m:["Fb","Ab"], dim:["Fb","Abb"], aug:["F","A"] },
+                "Gb": { M:["Bb","Db"], m:["Bbb","Db"], dim:["Bbb","Dbb"], aug:["Bb","D"] },
+                "Cb": { M:["Eb","Gb"], m:["Ebb","Gb"], dim:["Ebb","Gbb"], aug:["Eb","G"] }
+            };
+
+            const PHYSICAL_MAP = {
+                "B#": "C", "E#": "F", "Cb": "B", "Fb": "E",
+                "Fx": "G", "Cx": "D", "Gx": "A", "Dx": "E", "Ax": "B",
+                "Bbb": "A", "Ebb": "D", "Abb": "G", "Dbb": "C", "Gbb": "F"
+            };
+
+            // --- ESTADO ---
+            let state = {
+                mode: 'M',
+                selectedRoots: ['C'], 
+                currentRoot: null,
+                currentQuality: null,
+                notesToFind: [],
+                foundThird: false,
+                foundFifth: false,
+                streak: 0,
+                bestStreak: 0,
+                bestTime: 0, // en segundos
+                startTime: 0,
+                timerId: null
+            };
+
+            // --- UI ---
+            const els = {
+                menu: document.getElementById('main-menu'),
+                game: document.getElementById('game-container'),
+                modal: document.getElementById('game-over-modal'),
+                sharpsRow: document.getElementById('sharps-row'),
+                flatsRow: document.getElementById('flats-row'),
+                nextBtn: document.getElementById('next-btn'),
+                taskTitle: document.getElementById('task-title'),
+                bar: document.getElementById('feedback-bar'),
+                timer: document.getElementById('timer-display'),
+                streak: document.getElementById('streak-display'),
+                bestStreak: document.getElementById('best-streak'),
+                bestTime: document.getElementById('best-time'),
+                modeBadge: document.getElementById('mode-badge'),
+                whiteKeys: document.querySelectorAll('.key.white'),
+                blackKeys: document.querySelectorAll('.key.black')
+            };
+
+            // --- LÓGICA CORE ---
+
+            function loadRecords() {
+                const s = localStorage.getItem('triad_best_streak');
+                const t = localStorage.getItem('triad_best_time');
+                state.bestStreak = s ? parseInt(s) : 0;
+                state.bestTime = t ? parseInt(t) : 0;
+                updateRecordsUI();
+            }
+
+            function saveRecords() {
+                localStorage.setItem('triad_best_streak', state.bestStreak);
+                localStorage.setItem('triad_best_time', state.bestTime);
+                updateRecordsUI();
+            }
+
+            function updateRecordsUI() {
+                els.bestStreak.textContent = state.bestStreak;
+                els.bestTime.textContent = formatTime(state.bestTime);
+            }
+
+            function initGame(mode) {
+                state.mode = mode;
+                state.streak = 0;
+                state.selectedRoots = ['C']; 
+                
+                loadRecords();
+                
+                const modeNames = { 'M':'MAYOR', 'm':'MENOR', 'dim':'DISMINUIDA', 'aug':'AUMENTADA', 'master':'MODO MAESTRO' };
+                els.modeBadge.textContent = modeNames[mode];
+                
+                els.menu.classList.add('hidden');
+                els.game.classList.remove('hidden');
+                els.game.classList.add('flex');
+                
+                renderChunkList();
+                setupRound();
+                startTimer();
+            }
+
+            function exitToMenu() {
+                clearInterval(state.timerId);
+                els.game.classList.add('hidden');
+                els.game.classList.remove('flex');
+                els.menu.classList.remove('hidden');
+                els.modal.classList.add('hidden');
+                resetKeys();
+            }
+
+            function restartGame() {
+                els.modal.classList.add('hidden');
+                state.streak = 0;
+                els.streak.textContent = "0";
+                startTimer();
+                setupRound();
+            }
+
+            function toggleRootSelection(rootName) {
+                const idx = state.selectedRoots.indexOf(rootName);
+                if (idx > -1) {
+                    if (state.selectedRoots.length > 1) {
+                        state.selectedRoots.splice(idx, 1);
+                    } else {
+                        return; // No vaciar
+                    }
+                } else {
+                    state.selectedRoots.push(rootName);
+                }
+                renderChunkList();
+                setupRound(); // REINICIO INMEDIATO AL CAMBIAR SELECCIÓN
+            }
+
+            function renderChunkList() {
+                els.sharpsRow.innerHTML = '';
+                els.flatsRow.innerHTML = '';
+
+                const renderBtn = (root, container) => {
+                    const isSelected = state.selectedRoots.includes(root.name);
+                    const btn = document.createElement('button');
+                    btn.onclick = () => toggleRootSelection(root.name);
+                    btn.className = `text-[10px] font-bold px-3 py-1.5 rounded border transition-all select-none `;
+                    
+                    if (isSelected) {
+                        btn.className += `bg-blue-600 border-blue-500 text-white shadow-sm hover:bg-blue-500`;
+                    } else {
+                        btn.className += `bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300`;
+                    }
+                    btn.textContent = root.name;
+                    container.appendChild(btn);
+                };
+
+                SHARPS.forEach(r => renderBtn(r, els.sharpsRow));
+                FLATS.forEach(r => renderBtn(r, els.flatsRow));
+            }
+
+            function setupRound() {
+                const pool = ALL_ROOTS.filter(r => state.selectedRoots.includes(r.name));
+                
+                state.currentRoot = pool.length > 0 
+                    ? pool[Math.floor(Math.random() * pool.length)]
+                    : ALL_ROOTS[0];
+
+                if (state.mode === 'master') {
+                    const q = ['M', 'm', 'dim', 'aug'];
+                    state.currentQuality = q[Math.floor(Math.random() * 4)];
+                } else {
+                    state.currentQuality = state.mode;
+                }
+
+                const targetsRaw = CHORD_DATA[state.currentRoot.name][state.currentQuality];
+                const rootPhys = resolvePhysical(state.currentRoot.name);
+                const thirdPhys = resolvePhysical(targetsRaw[0]);
+                const fifthPhys = resolvePhysical(targetsRaw[1]);
+
+                state.notesToFind = [thirdPhys, fifthPhys];
+                state.foundThird = false;
+                state.foundFifth = false;
+                
+                // Reset UI
+                els.bar.style.width = '0%';
+                els.bar.className = "h-full bg-gray-600 w-0 transition-all duration-200";
+                
+                // Botón Next invisible pero ocupando espacio
+                els.nextBtn.classList.add('next-btn-placeholder');
+                els.nextBtn.classList.remove('animate-bounce'); // si hubiera
+                
+                resetKeys();
+
+                // Title
+                const suffixMap = { 'M': 'Mayor', 'm': 'Menor', 'dim': 'dim', 'aug': 'aug' };
+                const displaySuffix = suffixMap[state.currentQuality];
+                els.taskTitle.innerHTML = `<span class="text-blue-400">${state.currentRoot.name}</span> <span class="text-white ml-2 text-2xl align-middle">${displaySuffix}</span>`;
+                
+                updateKeyboardLabels(state.currentRoot.name, state.currentQuality);
+                
+                const rootKey = findKey(rootPhys);
+                if (rootKey) rootKey.classList.add('root-note');
+            }
+
+            function getAccidentalMode(rootName, quality) {
+                if (rootName.includes('b') || rootName === 'F') return true;
+                if (rootName.includes('#')) return false;
+                if (quality === 'm' || quality === 'dim') {
+                    if (['E', 'B'].includes(rootName)) return false;
+                    if (['G', 'D', 'A'].includes(rootName) && quality === 'dim') return true;
+                    if (rootName === 'C' || rootName === 'G' || rootName === 'D' || rootName === 'A' || rootName === 'F') return true;
+                }
+                return false;
+            }
+
+            function updateKeyboardLabels(rootName, quality) {
+                els.whiteKeys.forEach(k => k.textContent = k.dataset.note);
+                const useFlats = getAccidentalMode(rootName, quality);
+
+                els.blackKeys.forEach(k => {
+                    const lbl = k.querySelector('.label');
+                    lbl.textContent = useFlats ? k.dataset.flat : k.dataset.sharp;
+                });
+
+                const targets = CHORD_DATA[rootName][quality];
+                const rPhys = resolvePhysical(rootName);
+                if(rPhys !== rootName) {
+                   const k = document.getElementById(`key-${rPhys}`);
+                   if(k) k.textContent = rootName;
+                }
+                targets.forEach(tName => {
+                    const tPhys = resolvePhysical(tName);
+                    if (tPhys !== tName) {
+                        const k = document.getElementById(`key-${tPhys}`);
+                        if (k) k.textContent = tName;
+                    }
+                });
+            }
+
+            function resolvePhysical(note) { return PHYSICAL_MAP[note] || note; }
+            
+            function findKey(phys) {
+                let k = document.getElementById(`key-${phys}`);
+                if (k) return k;
+                for(let bk of els.blackKeys) {
+                    if (bk.dataset.sharp === phys || bk.dataset.flat === phys) return bk;
+                }
+                return null;
+            }
+
+            function resetKeys() {
+                document.querySelectorAll('.key').forEach(k => 
+                    k.classList.remove('root-note', 'correct-note', 'wrong-note')
+                );
+            }
+
+            function handleKeyClick(e) {
+                if (state.foundThird && state.foundFifth) return;
+                
+                const key = e.currentTarget;
+                if (key.classList.contains('root-note') || key.classList.contains('correct-note')) return;
+
+                let match = false;
+
+                // Check if clicked key matches targets
+                let playedVals = key.classList.contains('white') ? [key.dataset.note] : [key.dataset.sharp, key.dataset.flat];
+                const t3 = state.notesToFind[0];
+                const t5 = state.notesToFind[1];
+
+                if (playedVals.includes(t3)) { match = true; }
+                if (playedVals.includes(t5)) { match = true; }
+
+                if (match) {
+                    key.classList.add('correct-note');
+                    
+                    if (playedVals.includes(t3)) state.foundThird = true;
+                    if (playedVals.includes(t5)) state.foundFifth = true;
+
+                    let p = 0;
+                    if(state.foundThird) p+=50;
+                    if(state.foundFifth) p+=50;
+                    els.bar.style.width = `${p}%`;
+                    
+                    if(p===100) {
+                        els.bar.className = "h-full bg-green-500 w-full transition-all duration-200 shadow-[0_0_15px_rgba(34,197,94,0.6)]";
+                        handleWin();
+                    }
+
+                } else {
+                    key.classList.add('wrong-note');
+                    handleLoss();
+                }
+            }
+
+            function handleWin() {
+                state.streak++;
+                if (state.streak > state.bestStreak) {
+                    state.bestStreak = state.streak;
+                    saveRecords();
+                }
+                
+                // Calculo tiempo actual para record
+                const currentTime = Math.floor((Date.now() - state.startTime) / 1000);
+                if (currentTime > state.bestTime) {
+                    state.bestTime = currentTime;
+                    saveRecords();
+                }
+
+                els.streak.textContent = state.streak;
+                
+                // Mostrar Botón (Quitar clase placeholder)
+                els.nextBtn.classList.remove('next-btn-placeholder');
+            }
+
+            function handleLoss() {
+                clearInterval(state.timerId);
+                document.getElementById('modal-time').textContent = els.timer.textContent;
+                document.getElementById('modal-score').textContent = state.streak;
+                els.modal.classList.remove('hidden');
+            }
+
+            function startTimer() {
+                state.startTime = Date.now();
+                clearInterval(state.timerId);
+                state.timerId = setInterval(() => {
+                    const delta = Math.floor((Date.now() - state.startTime) / 1000);
+                    els.timer.textContent = formatTime(delta);
+                }, 1000);
+            }
+
+            function formatTime(s) {
+                const m = Math.floor(s / 60).toString().padStart(2, '0');
+                const sec = (s % 60).toString().padStart(2, '0');
+                return `${m}:${sec}`;
+            }
+
+            document.querySelectorAll('.key').forEach(k => {
+                k.addEventListener('mousedown', handleKeyClick);
+                k.addEventListener('touchstart', (e) => { e.preventDefault(); handleKeyClick(e); });
+            });
+            
+            els.nextBtn.addEventListener('click', setupRound);
+
+            return { initGame, exitToMenu, restartGame, toggleRootSelection };
+        })();
+    </script>
+</body>
+</html>
+
