@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Master de Tríadas Pro - Agile Final</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Master de Tríadas Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -11,12 +11,19 @@
     
     <style>
         /* --- 1. BASE --- */
+        :root {
+            --piano-height: 35dvh; /* Altura dinámica: 35% de la pantalla real */
+        }
+
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #020617; 
             overflow: hidden; 
             touch-action: none;
             user-select: none; -webkit-user-select: none;
+            /* Altura dinámica real para móviles */
+            height: 100dvh; 
+            width: 100vw;
         }
 
         /* --- 2. ANIMACIONES --- */
@@ -28,26 +35,40 @@
             50% { border-color: #f87171; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2); }
         }
 
-        /* --- 3. PIANO CONTAINER --- */
+        /* --- 3. PIANO CONTAINER (RESPONSIVE FIX) --- */
+        .piano-wrapper-outer {
+            /* Contenedor externo para controlar márgenes y sombras */
+            width: 100%;
+            height: var(--piano-height);
+            min-height: 140px; /* No menos que esto */
+            max-height: 280px; /* No más que esto */
+            background: #0f172a;
+            border-top: 4px solid #1e293b;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+            /* Safe area para iPhone X+ */
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
         .piano-viewport {
-            width: 100%; height: 240px;
-            background: #0f172a; border-top: 4px solid #1e293b;
+            width: 100%; 
+            height: 100%;
             position: relative; cursor: grab; 
             overflow-x: auto; overflow-y: hidden;
             touch-action: pan-x;
             scrollbar-width: none; -ms-overflow-style: none;
             box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
-            /* Centrado inicial con flex */
-            display: flex; justify-content: center;
+            /* Flex start para permitir scroll completo desde el inicio */
+            display: flex; 
             align-items: flex-start;
-            border-radius: 12px 12px 0 0;
         }
         .piano-viewport:active { cursor: grabbing; }
         .piano-viewport::-webkit-scrollbar { display: none; }
 
         .piano-inner {
             position: relative; height: 100%;
-            min-width: 960px; /* Ancho fijo geométrico */
+            /* Ancho fijo suficiente para 2 octavas cómodas en móvil */
+            min-width: 960px; 
+            /* Margen auto para centrar en PC, flex-shrink 0 para no aplastarse en móvil */
             margin: 0 auto; 
             flex-shrink: 0;
         }
@@ -61,32 +82,31 @@
             border-radius: 0 0 6px 6px; border: 1px solid #cbd5e1; border-top: none;
             box-shadow: inset 0 -8px 0 rgba(0,0,0,0.15);
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 12px; font-weight: 800; font-size: 0.8rem;
-            z-index: 1; /* Nivel Base Bajo */
+            padding-bottom: 10%; /* Padding relativo a altura */
+            font-weight: 800; font-size: 0.8rem;
+            z-index: 1; 
         }
         .key.white:active { background-color: #e2e8f0; transform: scaleY(0.98); border-bottom: none; }
 
         .key.black {
-            height: 55%; /* Altura ajustada para dejar ver texto */
+            height: 60%;
             background: linear-gradient(to bottom, #334155 0%, #0f172a 100%);
             color: #94a3b8;
             border-radius: 0 0 5px 5px; border: 1px solid #000;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.5), inset 0 -5px 0 rgba(255,255,255,0.1);
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 8px;
-            z-index: 50; /* Nivel Base Alto (Muralla) */
+            padding-bottom: 5px;
+            z-index: 50; 
         }
         .key.black .label { font-size: 0.65rem; pointer-events: none; text-align: center; width: 100%; }
         .key.black:active { background: #000; transform: scale(0.96); background-image: none; }
 
         /* --- ESTADOS --- */
-        /* Blancas Activas: Suben a 2, JAMÁS tocan el 50 de las negras */
         .key.white.root-note { background-color: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 2 !important; }
         .key.white.correct-note { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 2 !important; }
         .key.white.wrong-note { background-color: #ef4444 !important; color: white !important; z-index: 2 !important; }
         .key.white.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 2 !important; }
 
-        /* Negras Activas: Suben a 60 */
         .key.black.root-note { background: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 60 !important; background-image: none !important; }
         .key.black.correct-note { background: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 60 !important; background-image: none !important; }
         .key.black.wrong-note { background: #ef4444 !important; color: white !important; z-index: 60 !important; background-image: none !important; }
@@ -94,9 +114,10 @@
 
         .key.black.root-note .label, .key.black.correct-note .label, .key.black.wrong-note .label { color: white !important; }
 
-        /* --- UI --- */
+        /* --- UI RESPONSIVE --- */
         .selection-row { display: flex; flex-wrap: nowrap; gap: 0.5rem; width: 100%; overflow-x: auto; justify-content: center; padding-bottom: 4px; }
-        @media (max-width: 640px) { .selection-row { justify-content: flex-start; padding-left: 10px; padding-right: 10px; } }
+        /* En móviles, alinear inicio para que se vea el primer elemento al scrollear */
+        @media (max-width: 768px) { .selection-row { justify-content: flex-start; padding-left: 0.5rem; padding-right: 0.5rem; } }
         .selection-row::-webkit-scrollbar { display: none; }
 
         .note-toggle {
@@ -117,7 +138,7 @@
         .toast.visible { opacity: 1; }
     </style>
 </head>
-<body class="text-white h-screen flex flex-col bg-gray-950">
+<body class="text-white flex flex-col">
 
     <!-- AUDIO LOADER -->
     <div id="audio-toast" class="toast">
@@ -127,15 +148,14 @@
 
     <!-- SECCIÓN 1: MENÚ PRINCIPAL -->
     <div id="section-menu" class="flex-1 flex flex-col p-4 max-w-4xl mx-auto w-full h-full overflow-y-auto justify-center fade-in">
-        <div class="text-center mb-10">
-            <h1 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-purple-600 mb-4">
+        <div class="text-center mb-6 md:mb-10">
+            <h1 class="text-4xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-purple-600 mb-4">
                 Master de Tríadas
             </h1>
             <p class="text-slate-400 text-xs uppercase tracking-[0.3em]">Entrenamiento Auditivo</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mx-auto">
-            <!-- Botones de Modo -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mx-auto pb-8">
             <div onclick="GameCore.selectMode('M')" class="menu-card bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center gap-4 hover:border-blue-500">
                 <div class="bg-blue-500/20 text-blue-400 p-3 rounded-xl text-2xl font-bold w-14 h-14 flex items-center justify-center">M</div>
                 <div><h3 class="font-bold text-xl">Mayor</h3><p class="text-xs text-slate-500 mt-1">1 - 3 - 5</p></div>
@@ -163,7 +183,7 @@
     <div id="section-game" class="hidden flex-col h-full bg-slate-900 relative">
         
         <!-- Header -->
-        <div class="bg-slate-900/90 border-b border-slate-700 p-4 flex justify-between items-center shadow-lg z-30 shrink-0">
+        <div class="bg-slate-900/90 border-b border-slate-700 p-3 flex justify-between items-center shadow-lg z-30 shrink-0">
             <button onclick="GameCore.exit()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 px-4 rounded-lg transition-colors border border-slate-700">⬅ SALIR</button>
             <div class="flex gap-4 text-center">
                 <button onclick="TheoryModal.open()" id="btn-theory" class="hidden bg-purple-900/50 hover:bg-purple-800 text-purple-300 text-[10px] font-bold py-1.5 px-3 rounded border border-purple-700 transition-colors">
@@ -174,9 +194,9 @@
         </div>
 
         <!-- Panel de Selección (Notas) -->
-        <div class="bg-slate-900/95 border-b border-slate-800 p-4 z-20 shadow-md shrink-0">
-            <div class="text-center text-[10px] text-slate-400 font-bold uppercase mb-3 tracking-widest">Elige los acordes</div>
-            <div class="flex flex-col gap-3 w-full overflow-hidden">
+        <div class="bg-slate-900/95 border-b border-slate-800 p-3 z-20 shadow-md shrink-0">
+            <div class="text-center text-[10px] text-slate-400 font-bold uppercase mb-2 tracking-widest">Elige los acordes</div>
+            <div class="flex flex-col gap-2 w-full overflow-hidden">
                 <div id="row-sharps" class="selection-row"></div>
                 <div id="row-flats" class="selection-row"></div>
             </div>
@@ -187,36 +207,36 @@
             
             <!-- Estado: IDLE (Botón Iniciar) -->
             <div id="state-idle" class="text-center w-full fade-in">
-                <button onclick="GameCore.start()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 px-16 rounded-2xl shadow-xl shadow-blue-900/40 text-2xl transition-transform active:scale-95">
+                <button onclick="GameCore.start()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 px-12 rounded-2xl shadow-xl shadow-blue-900/40 text-xl md:text-2xl transition-transform active:scale-95">
                     INICIAR
                 </button>
             </div>
 
             <!-- Estado: PLAYING (Juego Activo) -->
-            <div id="state-playing" class="hidden text-center w-full max-w-md">
+            <div id="state-playing" class="hidden flex flex-col items-center w-full max-w-md">
                 <h2 class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-2">ARMA EL ACORDE</h2>
-                <div id="ui-chord-title" class="text-5xl md:text-7xl font-black text-white mb-4 drop-shadow-2xl select-none">C</div>
+                <div id="ui-chord-title" class="text-5xl md:text-7xl font-black text-white mb-6 drop-shadow-2xl select-none transition-all text-center">C</div>
                 
                 <!-- Barra de Progreso -->
-                <div class="h-3 w-full max-w-[240px] mx-auto bg-slate-800 rounded-full overflow-hidden border border-slate-700 mb-6 shadow-inner">
+                <div class="h-3 w-full max-w-[240px] mx-auto bg-slate-800 rounded-full overflow-hidden border border-slate-700 mb-8 shadow-inner">
                     <div id="ui-progress" class="h-full bg-blue-500 w-0 transition-all duration-200"></div>
                 </div>
 
                 <!-- Botones de Acción -->
                 <div class="h-16 flex justify-center items-center gap-4">
-                    <button id="btn-next" onclick="GameCore.nextRound()" class="action-btn hidden-btn bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg shadow-green-900/50">
+                    <button id="btn-next" onclick="GameCore.nextRound()" class="action-btn hidden-btn bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-green-900/50 text-sm">
                         SIGUIENTE ➡
                     </button>
-                    <button id="btn-retry" onclick="GameCore.retryRound()" class="action-btn hidden-btn bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg shadow-red-900/50">
+                    <button id="btn-retry" onclick="GameCore.retryRound()" class="action-btn hidden-btn bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-red-900/50 text-sm">
                         INTENTAR DE NUEVO ↺
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- SECCIÓN 3: TECLADO (Footer) - Con Margen Inferior y Bordes Redondeados -->
-        <div class="shrink-0 bg-slate-950 relative z-10 pb-6 px-4"> 
-            <div class="shadow-[0_10px_40px_rgba(0,0,0,0.5)] rounded-t-xl overflow-hidden border border-slate-800">
+        <!-- SECCIÓN 3: TECLADO (Footer) -->
+        <div class="shrink-0 bg-slate-950 border-t-4 border-slate-800 relative z-10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+            <div class="piano-wrapper-outer">
                 <div id="piano-viewport" class="piano-viewport">
                     <div id="piano-inner" class="piano-inner">
                         <!-- Las teclas se generan aquí -->
@@ -243,7 +263,7 @@
     </div>
 
     <script>
-        /** ARQUITECTURA MODULAR AGILE v34.0 - FIXED VALIDATION & LAYOUT **/
+        /** ARQUITECTURA MODULAR AGILE v32.0 - RESPONSIVE FIX **/
 
         // === MÓDULO 1: DATOS MUSICALES (TheoryData) ===
         const TheoryData = {
@@ -257,10 +277,10 @@
             },
             intervals: { 'M':[4,7], 'm':[3,7], 'dim':[3,6], 'aug':[4,8] },
             descriptions: {
-                'M': "Acorde Mayor: Sonido alegre, estable y brillante. Formado por una 3ra Mayor (4 semitonos) y una 5ta Justa (7 semitonos).",
-                'm': "Acorde Menor: Sonido triste, melancólico o serio. Formado por una 3ra Menor (3 semitonos) y una 5ta Justa.",
-                'dim': "Acorde Disminuido: Sonido tenso, inestable y de suspenso. Formado por dos 3ras Menores apiladas.",
-                'aug': "Acorde Aumentado: Sonido misterioso, espacial y onírico. Formado por dos 3ras Mayores apiladas."
+                'M': "Acorde Mayor: Sonido alegre, estable y brillante.",
+                'm': "Acorde Menor: Sonido triste, melancólico o serio.",
+                'dim': "Acorde Disminuido: Sonido tenso y de suspenso.",
+                'aug': "Acorde Aumentado: Sonido misterioso y espacial."
             },
             formulas: {
                 'M': "1 - 3 - 5", 'm': "1 - b3 - 5", 'dim': "1 - b3 - b5", 'aug': "1 - 3 - #5"
@@ -305,19 +325,17 @@
                 this.sampler.volume.value = -5;
             },
             playNote: function(note, octave) {
-                if(!this.sampler) return; // Fallback silencioso si no ha cargado
+                if(!this.sampler) return; 
                 let phys = TheoryData.enharmonics[note] || note; 
                 this.sampler.triggerAttackRelease(phys + octave, "8n");
             },
             playSequence: function(notes) {
                 if(!this.sampler) return;
                 const now = Tone.now();
-                // 1. Tónica -> 3ra -> 5ta
                 notes.forEach((n, i) => {
                     let phys = TheoryData.enharmonics[n.note] || n.note;
                     this.sampler.triggerAttackRelease(phys + n.oct, "8n", now + (i * 0.25));
                 });
-                // 2. Acorde
                 const chord = notes.map(n => (TheoryData.enharmonics[n.note] || n.note) + n.oct);
                 this.sampler.triggerAttackRelease(chord, "2n", now + 1.0);
             }
@@ -332,9 +350,8 @@
             build: function() {
                 this.container.innerHTML = '';
                 this.keys = [];
-                
                 const startOct = 4;
-                const totalNotes = 25; // C4 a C6 (2 octavas)
+                const totalNotes = 25; // C4 a C6
                 const WHITE_WIDTH = 64; 
                 const BLACK_WIDTH = 38; 
 
@@ -357,7 +374,6 @@
                     const keyObj = { id: keyId, el: keyEl, note: note, oct: oct };
                     this.keys.push(keyObj);
 
-                    // Evento de toque (Input desacoplado)
                     keyEl.addEventListener('pointerup', (e) => GameCore.handleInput(keyObj));
                     keyEl.addEventListener('pointerdown', () => keyEl.classList.add('active'));
                     keyEl.addEventListener('pointerout', () => keyEl.classList.remove('active'));
@@ -365,7 +381,6 @@
 
                     this.container.appendChild(keyEl);
 
-                    // Posicionamiento
                     let whitesPassed = 0;
                     for(let j=0; j<i; j++) { if(!TheoryData.chromatic[j%12].includes('#')) whitesPassed++; }
 
@@ -380,7 +395,6 @@
                         keyEl.style.width = `${WHITE_WIDTH}px`;
                     }
                 }
-                
                 this.setupScroll();
             },
 
@@ -411,11 +425,21 @@
                     k.el.querySelector('.label').innerText = display;
                 });
             },
-            
+
+            getKey: function(phys, oct) {
+                return this.keys.find(k => k.note === phys && k.oct === oct);
+            },
+
             scrollToKey: function(keyEl) {
+                // Centrado mejorado
                 const offset = keyEl.offsetLeft;
                 const viewportW = this.viewport.clientWidth;
-                this.viewport.scrollTo({ left: offset - (viewportW / 2) + 30, behavior: 'smooth' });
+                // Aseguramos que no se salga de los bordes
+                let target = offset - (viewportW / 2) + 32; // +32 es medio ancho tecla blanca
+                target = Math.max(0, target); // No menos de 0
+                target = Math.min(target, this.container.clientWidth - viewportW); // No más del final
+                
+                this.viewport.scrollTo({ left: target, behavior: 'smooth' });
             }
         };
 
@@ -446,13 +470,15 @@
             el: document.getElementById('modal-theory'),
             open: function() {
                 if(!GameCore.state.current) return;
-                const {name, quality} = GameCore.state.current;
+                const {name, quality, root, targets} = GameCore.state.current;
+                
                 const realNotes = [name, ...TheoryData.chords[name][quality]];
 
                 document.getElementById('theory-title').innerText = `${name} ${{'M':'Mayor','m':'Menor','dim':'Disminuido','aug':'Aumentado'}[quality]}`;
                 document.getElementById('theory-notes').innerText = realNotes.join(' - ');
                 document.getElementById('theory-formula').innerText = TheoryData.formulas[quality];
                 document.getElementById('theory-desc').innerText = TheoryData.descriptions[quality];
+                
                 this.el.classList.remove('hidden');
             },
             close: function() { this.el.classList.add('hidden'); }
@@ -468,7 +494,7 @@
             },
 
             selectMode: function(mode) {
-                AudioService.init(); // Despertar audio
+                AudioService.init(); 
                 this.state.mode = mode;
                 this.state.streak = 0;
                 this.state.pool = ['C'];
@@ -488,9 +514,8 @@
                 this.state.current = null;
                 PianoView.reset();
                 
-                // Centrar piano
-                const center = (document.getElementById('piano-inner').clientWidth - document.getElementById('piano-viewport').clientWidth) / 2;
-                document.getElementById('piano-viewport').scrollLeft = Math.max(0, center);
+                // Scroll al inicio por defecto
+                document.getElementById('piano-viewport').scrollTo({ left: 0, behavior: 'smooth' });
             },
 
             start: function() {
@@ -513,14 +538,14 @@
             nextRound: function() {
                 PianoView.reset();
                 this.resetUI();
-                this.state.found = []; // Notas encontradas
+                this.state.found = [];
                 this.state.locked = false;
 
                 const rootName = this.state.pool[Math.floor(Math.random() * this.state.pool.length)];
                 const quality = this.state.mode === 'master' ? ['M','m','dim','aug'][Math.floor(Math.random()*4)] : this.state.mode;
                 
                 const rootPhys = TheoryData.enharmonics[rootName] || rootName;
-                const rootKey = PianoView.keys.find(k => k.note === rootPhys && k.oct === 4); 
+                const rootKey = PianoView.getKey(rootPhys, 4); 
                 const rootIdx = PianoView.keys.indexOf(rootKey);
                 const targets = TheoryData.intervals[quality].map(st => PianoView.keys[rootIdx + st]);
 
@@ -547,26 +572,29 @@
 
                 if(!this.state.current || this.state.locked) return;
 
-                // CORRECCIÓN DE VALIDACIÓN: Ignora octava para tónica
-                if(keyObj.note === this.state.current.root.note) return; 
-                
-                // Ignorar si ya se encontró
-                if(this.state.found.includes(keyObj.note)) return;
+                // IGNORAR OCTAVA: Solo importa el nombre de la nota
+                if(keyObj.note === this.state.current.root.note) return; // Es tónica
 
-                // CORRECCIÓN VALIDACIÓN: Buscar por nombre de nota (agnóstico de octava)
-                const targetNotes = this.state.current.targets.map(t => t.note);
+                // Buscar si la nota tocada (nombre) está en los objetivos (nombres)
+                const targetNoteNames = this.state.current.targets.map(t => t.note);
                 
-                if(targetNotes.includes(keyObj.note)) {
+                if (targetNoteNames.includes(keyObj.note)) {
                     // Correcto
-                    keyObj.el.classList.add('correct-note');
-                    this.state.found.push(keyObj.note);
-                    
-                    const pct = (this.state.found.length / 2) * 100;
-                    document.getElementById('ui-progress').style.width = `${pct}%`;
+                    // Solo añadir si no la hemos encontrado ya (por nombre)
+                    if (!this.state.found.includes(keyObj.note)) {
+                        this.state.found.push(keyObj.note);
+                        keyObj.el.classList.add('correct-note');
+                        
+                        const pct = (this.state.found.length / 2) * 100;
+                        document.getElementById('ui-progress').style.width = `${pct}%`;
 
-                    if(this.state.found.length === 2) this.win();
+                        if(this.state.found.length === 2) this.win();
+                    } else {
+                        // Ya encontrada, solo feedback visual
+                        keyObj.el.classList.add('correct-note');
+                    }
                 } else {
-                    // Incorrecto
+                    // Error
                     keyObj.el.classList.add('wrong-note');
                     this.lose();
                 }
@@ -591,7 +619,8 @@
                 document.getElementById('ui-progress').className = 'h-full bg-red-500 shadow-lg transition-all';
                 document.getElementById('ui-progress').style.width = '100%';
 
-                // Mostrar solución
+                // Mostrar solución (Todas las instancias de las notas correctas en octava 4 y 5)
+                // O simplemente los targets específicos calculados
                 this.state.current.targets.forEach(t => t.el.classList.add('missed-note'));
                 
                 this.showActionBtn('btn-retry');
