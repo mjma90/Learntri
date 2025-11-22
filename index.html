@@ -3,672 +3,638 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Suite de Entrenamiento de Tríadas</title>
+    <title>Master de Tríadas Pro - Agile v2.0</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; touch-action: manipulation; }
+        /* --- 1. BASE --- */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #020617; 
+            overflow: hidden; 
+            touch-action: none;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        /* --- 2. ANIMACIONES --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         
-        /* --- ANIMACIONES --- */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .fade-in { animation: fadeIn 0.4s ease forwards; }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0.9); opacity: 0; }
-            60% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); }
-        }
-        .animate-bounce-in { animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-
-        /* --- PIANO CSS --- */
-        .piano-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 480px;
-            height: 150px;
-            background-color: #111827;
-            border-radius: 0 0 1rem 1rem;
-            overflow: hidden;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            margin: 0 auto;
-        }
-        
-        .white-keys-container {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            height: 100%;
-            width: 100%;
-            padding: 0 2px 4px 2px;
-            gap: 2px;
+        @keyframes pulse-error {
+            0%, 100% { border-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { border-color: #f87171; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2); }
         }
 
-        .key {
-            cursor: pointer;
+        /* --- 3. PIANO CONTAINER --- */
+        .piano-viewport {
+            width: 100%; height: 240px;
+            background: #0f172a; border-top: 4px solid #1e293b;
+            position: relative; cursor: grab; 
+            overflow-x: auto; overflow-y: hidden;
+            touch-action: pan-x;
+            scrollbar-width: none; -ms-overflow-style: none;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
             display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            padding-bottom: 8px;
-            font-weight: 700;
-            font-size: 0.75rem;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            transition: background-color 0.1s, transform 0.05s;
+            align-items: flex-start;
         }
+        .piano-viewport:active { cursor: grabbing; }
+        .piano-viewport::-webkit-scrollbar { display: none; }
+
+        .piano-inner {
+            position: relative; height: 100%;
+            min-width: 960px; /* Ancho fijo garantizado */
+            margin: 0 auto; 
+            flex-shrink: 0;
+        }
+        
+        /* --- 4. TECLAS --- */
+        .key { position: absolute; top: 0; cursor: pointer; transition: background-color 0.05s; }
 
         .key.white {
-            background-color: white;
-            color: #374151;
-            border-radius: 0 0 6px 6px;
             height: 100%;
-            box-shadow: inset 0 -5px 0 rgba(0,0,0,0.1);
+            background-color: #f8fafc; color: #334155;
+            border-radius: 0 0 6px 6px; border: 1px solid #cbd5e1; border-top: none;
+            box-shadow: inset 0 -8px 0 rgba(0,0,0,0.15);
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+            padding-bottom: 12px; font-weight: 800; font-size: 0.8rem;
+            z-index: 2; 
         }
-        
-        .key.white:active {
-            background-color: #e5e7eb;
-            transform: scale(0.98);
-        }
+        .key.white:active { background-color: #e2e8f0; transform: scaleY(0.98); border-bottom: none; }
 
         .key.black {
-            position: absolute;
-            top: 0;
             height: 60%;
-            width: 10%;
-            background-color: #1f2937;
-            color: #9ca3af;
-            border-radius: 0 0 4px 4px;
-            z-index: 10;
-            box-shadow: inset 0 -3px 0 rgba(255,255,255,0.1), 2px 2px 5px rgba(0,0,0,0.3);
-            border: 1px solid #374151;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
+            background: linear-gradient(to bottom, #334155 0%, #0f172a 100%);
+            color: #94a3b8;
+            border-radius: 0 0 5px 5px; border: 1px solid #000;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5), inset 0 -5px 0 rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
             padding-bottom: 8px;
-            text-align: center;
+            z-index: 10; 
         }
+        .key.black .label { font-size: 0.65rem; pointer-events: none; text-align: center; width: 100%; }
+        .key.black:active { background: #000; transform: scale(0.96); background-image: none; }
 
-        .key.black .label {
-            font-size: 0.65rem;
-            pointer-events: none;
-            line-height: 1;
-            width: 100%;
-            text-align: center;
+        /* --- ESTADOS --- */
+        .key.white.root-note { background-color: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 3 !important; }
+        .key.white.correct-note { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 3 !important; }
+        .key.white.wrong-note { background-color: #ef4444 !important; color: white !important; z-index: 3 !important; }
+        .key.white.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 3 !important; }
+
+        .key.black.root-note { background: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 20 !important; background-image: none !important; }
+        .key.black.correct-note { background: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 20 !important; background-image: none !important; }
+        .key.black.wrong-note { background: #ef4444 !important; color: white !important; z-index: 20 !important; background-image: none !important; }
+        .key.black.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 20 !important; }
+
+        .key.black.root-note .label, .key.black.correct-note .label, .key.black.wrong-note .label { color: white !important; }
+
+        /* --- UI --- */
+        .selection-row { display: flex; flex-wrap: nowrap; gap: 0.5rem; width: 100%; overflow-x: auto; justify-content: center; padding-bottom: 4px; }
+        @media (max-width: 640px) { .selection-row { justify-content: flex-start; padding-left: 10px; padding-right: 10px; } }
+        .selection-row::-webkit-scrollbar { display: none; }
+
+        .note-toggle {
+            width: 34px; height: 34px; flex-shrink: 0;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 0.75rem; font-weight: 800; border-radius: 8px; border: 1px solid #334155;
+            color: #64748b; cursor: pointer; transition: all 0.1s; background-color: #1e293b;
         }
-
-        .key.black:active {
-            transform: scale(0.98);
-            background-color: #111827;
-        }
-
-        /* Posiciones Teclas Negras */
-        .key.black[data-pos="1"] { left: 10%; }
-        .key.black[data-pos="2"] { left: 24.5%; }
-        .key.black[data-pos="3"] { left: 53%; }
-        .key.black[data-pos="4"] { left: 67.5%; }
-        .key.black[data-pos="5"] { left: 82%; }
-
-        /* Estados del Juego */
-        .key.root-note { background-color: #3b82f6 !important; color: white !important; }
-        .key.correct-note { background-color: #22c55e !important; color: white !important; }
-        .key.wrong-note { background-color: #ef4444 !important; color: white !important; }
-
-        .menu-card {
-            transition: transform 0.2s, border-color 0.2s;
-        }
+        .note-toggle.selected { background-color: #3b82f6; border-color: #2563eb; color: white; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+        
+        .menu-card { transition: transform 0.1s; cursor: pointer; }
         .menu-card:active { transform: scale(0.98); }
         
-        /* Estilos para el panel de selección sin scroll */
-        .selection-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            justify-content: center;
-        }
-        
-        /* Espacio reservado para botón Next */
-        .next-btn-container {
-            height: 3.5rem; /* Altura fija */
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-        
-        .next-btn-placeholder {
-            opacity: 0;
-            pointer-events: none;
-        }
+        .action-btn { transition: all 0.2s; opacity: 1; transform: translateY(0); }
+        .action-btn.hidden-btn { opacity: 0; pointer-events: none; transform: translateY(10px); display: none; }
+
+        .toast { position: fixed; bottom: 30px; right: 30px; background: rgba(15, 23, 42, 0.95); color: #4ade80; padding: 12px 20px; border-radius: 30px; font-size: 12px; font-weight: bold; z-index: 100; pointer-events: none; opacity: 0; transition: opacity 0.5s; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px; }
+        .toast.visible { opacity: 1; }
     </style>
 </head>
-<body class="bg-gray-950 text-white h-screen flex flex-col overflow-hidden selection:bg-blue-500 selection:text-white">
+<body class="text-white h-screen flex flex-col bg-gray-950">
 
-    <!-- ==================== PANTALLA MENÚ PRINCIPAL ==================== -->
-    <div id="main-menu" class="flex-1 flex flex-col p-4 fade-in max-w-4xl mx-auto w-full h-full overflow-y-auto">
-        
-        <div class="text-center mt-4 mb-6">
-            <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
+    <!-- AUDIO LOADER -->
+    <div id="audio-toast" class="toast">
+        <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>
+        Cargando Sonidos...
+    </div>
+
+    <!-- SECCIÓN 1: MENÚ PRINCIPAL -->
+    <div id="section-menu" class="flex-1 flex flex-col p-4 max-w-4xl mx-auto w-full h-full overflow-y-auto justify-center fade-in">
+        <div class="text-center mb-10">
+            <h1 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-purple-600 mb-4">
                 Master de Tríadas
             </h1>
-            <p class="text-gray-400 text-xs md:text-sm">Selecciona tu modo de entrenamiento</p>
+            <p class="text-slate-400 text-xs uppercase tracking-[0.3em]">Entrenamiento Auditivo</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl mx-auto mb-4 flex-shrink-0">
-            <button onclick="app.initGame('M')" class="menu-card bg-gray-900 border border-gray-800 p-4 rounded-xl flex items-center gap-3 hover:bg-gray-800 hover:border-blue-500/50">
-                <div class="bg-blue-500/10 text-blue-400 p-2 rounded-lg text-xl font-bold w-10 h-10 flex items-center justify-center">M</div>
-                <div class="text-left">
-                    <h3 class="font-bold text-base text-white">Mayor</h3>
-                    <p class="text-[10px] text-gray-500">1 - 3 - 5</p>
-                </div>
-            </button>
-
-            <button onclick="app.initGame('m')" class="menu-card bg-gray-900 border border-gray-800 p-4 rounded-xl flex items-center gap-3 hover:bg-gray-800 hover:border-indigo-500/50">
-                <div class="bg-indigo-500/10 text-indigo-400 p-2 rounded-lg text-xl font-bold w-10 h-10 flex items-center justify-center">m</div>
-                <div class="text-left">
-                    <h3 class="font-bold text-base text-white">Menor</h3>
-                    <p class="text-[10px] text-gray-500">1 - b3 - 5</p>
-                </div>
-            </button>
-
-            <button onclick="app.initGame('dim')" class="menu-card bg-gray-900 border border-gray-800 p-4 rounded-xl flex items-center gap-3 hover:bg-gray-800 hover:border-yellow-500/50">
-                <div class="bg-yellow-500/10 text-yellow-400 p-2 rounded-lg text-xl font-bold w-10 h-10 flex items-center justify-center">°</div>
-                <div class="text-left">
-                    <h3 class="font-bold text-base text-white">Disminuida</h3>
-                    <p class="text-[10px] text-gray-500">1 - b3 - b5</p>
-                </div>
-            </button>
-
-            <button onclick="app.initGame('aug')" class="menu-card bg-gray-900 border border-gray-800 p-4 rounded-xl flex items-center gap-3 hover:bg-gray-800 hover:border-red-500/50">
-                <div class="bg-red-500/10 text-red-400 p-2 rounded-lg text-xl font-bold w-10 h-10 flex items-center justify-center">+</div>
-                <div class="text-left">
-                    <h3 class="font-bold text-base text-white">Aumentada</h3>
-                    <p class="text-[10px] text-gray-500">1 - 3 - #5</p>
-                </div>
-            </button>
-
-            <button onclick="app.initGame('master')" class="menu-card sm:col-span-2 bg-gradient-to-r from-gray-900 to-purple-900/20 border border-purple-500/30 p-4 rounded-xl flex items-center justify-center gap-4 hover:border-purple-500 transition-all mt-2">
-                <div class="text-2xl">🎓</div>
-                <div class="text-left">
-                    <h3 class="font-bold text-lg text-purple-300">Modo Maestro</h3>
-                    <p class="text-[10px] text-gray-400">Mezcla aleatoria de todas las cualidades.</p>
-                </div>
-            </button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mx-auto">
+            <!-- Botones de Modo -->
+            <div onclick="GameCore.selectMode('M')" class="menu-card bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center gap-4 hover:border-blue-500">
+                <div class="bg-blue-500/20 text-blue-400 p-3 rounded-xl text-2xl font-bold w-14 h-14 flex items-center justify-center">M</div>
+                <div><h3 class="font-bold text-xl">Mayor</h3><p class="text-xs text-slate-500 mt-1">1 - 3 - 5</p></div>
+            </div>
+            <div onclick="GameCore.selectMode('m')" class="menu-card bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center gap-4 hover:border-indigo-500">
+                <div class="bg-indigo-500/20 text-indigo-400 p-3 rounded-xl text-2xl font-bold w-14 h-14 flex items-center justify-center">m</div>
+                <div><h3 class="font-bold text-xl">Menor</h3><p class="text-xs text-slate-500 mt-1">1 - b3 - 5</p></div>
+            </div>
+            <div onclick="GameCore.selectMode('dim')" class="menu-card bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center gap-4 hover:border-yellow-500">
+                <div class="bg-yellow-500/20 text-yellow-400 p-3 rounded-xl text-2xl font-bold w-14 h-14 flex items-center justify-center">°</div>
+                <div><h3 class="font-bold text-xl">Disminuida</h3><p class="text-xs text-slate-500 mt-1">1 - b3 - b5</p></div>
+            </div>
+            <div onclick="GameCore.selectMode('aug')" class="menu-card bg-slate-800 border border-slate-700 p-6 rounded-2xl flex items-center gap-4 hover:border-red-500">
+                <div class="bg-red-500/20 text-red-400 p-3 rounded-xl text-2xl font-bold w-14 h-14 flex items-center justify-center">+</div>
+                <div><h3 class="font-bold text-xl">Aumentada</h3><p class="text-xs text-slate-500 mt-1">1 - 3 - #5</p></div>
+            </div>
+            <div onclick="GameCore.selectMode('master')" class="menu-card sm:col-span-2 bg-slate-800 border border-purple-500/30 p-6 rounded-2xl flex items-center justify-center gap-6 hover:border-purple-500 mt-2">
+                <div class="text-4xl">🎓</div>
+                <div><h3 class="font-bold text-2xl text-purple-300">Modo Maestro</h3><p class="text-xs text-slate-400 mt-1">Mezcla aleatoria</p></div>
+            </div>
         </div>
     </div>
 
-    <!-- ==================== PANTALLA DE JUEGO ==================== -->
-    <div id="game-container" class="hidden flex-col h-full bg-gray-900 relative">
+    <!-- SECCIÓN 2: ÁREA DE JUEGO -->
+    <div id="section-game" class="hidden flex-col h-full bg-slate-900 relative">
         
-        <!-- Navbar -->
-        <div class="bg-gray-800 border-b border-gray-700 p-3 flex items-center justify-between shadow-md shrink-0 z-20">
-            <button onclick="app.exitToMenu()" class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold py-1.5 px-3 rounded transition-colors flex items-center gap-1">
-                <span>↩ Menú</span>
-            </button>
-            <div id="mode-badge" class="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-900/20 px-2 py-1 rounded border border-blue-800">
-                MAYOR
+        <!-- Header -->
+        <div class="bg-slate-900/90 border-b border-slate-700 p-4 flex justify-between items-center shadow-lg z-30 shrink-0">
+            <button onclick="GameCore.exit()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 px-4 rounded-lg transition-colors border border-slate-700">⬅ SALIR</button>
+            <div class="flex gap-4 text-center">
+                <button onclick="TheoryModal.open()" id="btn-theory" class="hidden bg-purple-900/50 hover:bg-purple-800 text-purple-300 text-[10px] font-bold py-1.5 px-3 rounded border border-purple-700 transition-colors">
+                    📖 TEORÍA
+                </button>
+                <div><span class="text-[8px] text-slate-500 font-bold tracking-widest block">RACHA</span><span id="ui-streak" class="font-mono text-blue-400 font-bold text-lg leading-none">0</span></div>
             </div>
         </div>
 
-        <!-- Área Principal con Scroll si es necesario -->
-        <div class="flex-1 overflow-y-auto flex flex-col items-center">
+        <!-- Panel de Selección (Notas) -->
+        <div class="bg-slate-900/95 border-b border-slate-800 p-4 z-20 shadow-md shrink-0">
+            <div class="text-center text-[10px] text-slate-400 font-bold uppercase mb-3 tracking-widest">Elige los acordes</div>
+            <div class="flex flex-col gap-3 w-full overflow-hidden">
+                <div id="row-sharps" class="selection-row"></div>
+                <div id="row-flats" class="selection-row"></div>
+            </div>
+        </div>
+
+        <!-- Área Central -->
+        <div class="flex-1 flex flex-col items-center justify-center p-4 relative overflow-hidden">
             
-            <!-- Panel de Selección (Dos Filas Fijas) -->
-            <div class="w-full bg-gray-900/50 border-b border-gray-800 p-4 flex flex-col items-center gap-3 shrink-0">
-                <!-- Fila Sostenidos -->
-                <div id="sharps-row" class="selection-grid"></div>
-                <!-- Separador Visual Sutil -->
-                <div class="w-full h-px bg-gray-800"></div>
-                <!-- Fila Bemoles -->
-                <div id="flats-row" class="selection-grid"></div>
+            <!-- Estado: IDLE (Botón Iniciar) -->
+            <div id="state-idle" class="text-center w-full fade-in">
+                <button onclick="GameCore.start()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 px-16 rounded-2xl shadow-xl shadow-blue-900/40 text-2xl transition-transform active:scale-95">
+                    INICIAR
+                </button>
             </div>
 
-            <!-- Contenedor Juego -->
-            <div class="w-full max-w-md flex flex-col items-center p-4 flex-grow">
+            <!-- Estado: PLAYING (Juego Activo) -->
+            <div id="state-playing" class="hidden text-center w-full max-w-md">
+                <h2 class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-2">ARMA EL ACORDE</h2>
+                <div id="ui-chord-title" class="text-5xl md:text-7xl font-black text-white mb-4 drop-shadow-2xl select-none">C</div>
                 
-                <!-- Stats -->
-                <div class="grid grid-cols-2 gap-8 w-full mb-6">
-                    <!-- Tiempo -->
-                    <div class="flex flex-col items-center bg-gray-800/50 p-2 rounded-lg border border-gray-700/50">
-                        <span class="text-[10px] text-gray-400 font-bold tracking-widest mb-1">TIEMPO</span>
-                        <span id="timer-display" class="font-mono font-bold text-white text-xl leading-none">00:00</span>
-                        <span class="text-[9px] text-gray-500 mt-1">RÉCORD: <span id="best-time" class="text-gray-300">00:00</span></span>
-                    </div>
-                    <!-- Racha -->
-                    <div class="flex flex-col items-center bg-gray-800/50 p-2 rounded-lg border border-gray-700/50">
-                        <span class="text-[10px] text-gray-400 font-bold tracking-widest mb-1">RACHA</span>
-                        <span id="streak-display" class="font-mono font-bold text-blue-400 text-xl leading-none">0</span>
-                        <span class="text-[9px] text-gray-500 mt-1">RÉCORD: <span id="best-streak" class="text-gray-300">0</span></span>
-                    </div>
+                <!-- Barra de Progreso -->
+                <div class="h-3 w-full max-w-[240px] mx-auto bg-slate-800 rounded-full overflow-hidden border border-slate-700 mb-6 shadow-inner">
+                    <div id="ui-progress" class="h-full bg-blue-500 w-0 transition-all duration-200"></div>
                 </div>
 
-                <!-- Título Acorde -->
-                <div class="text-center mb-6 w-full">
-                    <h1 id="task-title" class="text-4xl md:text-5xl font-black text-white mb-3 drop-shadow-lg h-12 flex items-center justify-center">
-                        <!-- Contenido Dinámico -->
-                    </h1>
-                    <!-- Barra Progreso -->
-                    <div class="h-1.5 w-32 mx-auto bg-gray-700 rounded-full overflow-hidden">
-                        <div id="feedback-bar" class="h-full bg-gray-600 w-0 transition-all duration-200"></div>
-                    </div>
-                </div>
-
-                <!-- Piano -->
-                <div class="w-full flex-shrink-0 mb-6">
-                    <div class="piano-wrapper">
-                        <div class="white-keys-container">
-                            <div class="key white" id="key-C" data-note="C">C</div>
-                            <div class="key white" id="key-D" data-note="D">D</div>
-                            <div class="key white" id="key-E" data-note="E">E</div>
-                            <div class="key white" id="key-F" data-note="F">F</div>
-                            <div class="key white" id="key-G" data-note="G">G</div>
-                            <div class="key white" id="key-A" data-note="A">A</div>
-                            <div class="key white" id="key-B" data-note="B">B</div>
-                        </div>
-                        <!-- Teclas Negras -->
-                        <div class="key black" data-pos="1" data-sharp="C#" data-flat="Db"><span class="label"></span></div>
-                        <div class="key black" data-pos="2" data-sharp="D#" data-flat="Eb"><span class="label"></span></div>
-                        <div class="key black" data-pos="3" data-sharp="F#" data-flat="Gb"><span class="label"></span></div>
-                        <div class="key black" data-pos="4" data-sharp="G#" data-flat="Ab"><span class="label"></span></div>
-                        <div class="key black" data-pos="5" data-sharp="A#" data-flat="Bb"><span class="label"></span></div>
-                    </div>
-                </div>
-
-                <!-- Botón Siguiente (Espacio Reservado Fijo) -->
-                <div class="next-btn-container">
-                    <button id="next-btn" class="next-btn-placeholder w-full max-w-xs bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-1">
-                        Siguiente ➡
+                <!-- Botones de Acción -->
+                <div class="h-16 flex justify-center items-center gap-4">
+                    <button id="btn-next" onclick="GameCore.nextRound()" class="action-btn hidden-btn bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg shadow-green-900/50">
+                        SIGUIENTE ➡
+                    </button>
+                    <button id="btn-retry" onclick="GameCore.retryRound()" class="action-btn hidden-btn bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg shadow-red-900/50">
+                        INTENTAR DE NUEVO ↺
                     </button>
                 </div>
+            </div>
+        </div>
 
+        <!-- SECCIÓN 3: TECLADO (Footer) -->
+        <div class="shrink-0 bg-slate-950 border-t-4 border-slate-800 relative z-10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] pb-6 pt-2">
+            <div class="px-4 sm:px-8 h-full">
+                <div id="piano-viewport" class="piano-viewport">
+                    <div id="piano-inner" class="piano-inner">
+                        <!-- Las teclas se generan aquí -->
+                    </div>
+                </div>
+            </div>
+            <div class="absolute bottom-1 left-0 right-0 text-center pointer-events-none opacity-40">
+                <span class="text-[8px] text-slate-500 bg-slate-900/80 px-2 py-0.5 rounded-full border border-slate-700 uppercase tracking-widest">Desliza para mover</span>
             </div>
         </div>
     </div>
 
-    <!-- Modal Game Over -->
-    <div id="game-over-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-6 max-w-xs w-full text-center animate-bounce-in">
-            <div class="text-4xl mb-2">❌</div>
-            <h2 class="text-xl font-bold text-white mb-4">¡Racha Terminada!</h2>
-            
-            <div class="flex justify-between bg-gray-900/50 p-3 rounded-lg mb-4 text-sm">
-                <div>
-                    <div class="text-[10px] text-gray-500 font-bold">TIEMPO</div>
-                    <div id="modal-time" class="font-mono font-bold text-white"></div>
-                </div>
-                <div>
-                    <div class="text-[10px] text-gray-500 font-bold">RACHA</div>
-                    <div id="modal-score" class="font-mono font-bold text-blue-400"></div>
-                </div>
+    <!-- VENTANA MODAL TEORÍA -->
+    <div id="modal-theory" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm fade-in">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
+            <button onclick="TheoryModal.close()" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
+            <h3 id="theory-title" class="text-2xl font-bold text-blue-400 mb-2">C Mayor</h3>
+            <div class="text-sm text-slate-300 space-y-3">
+                <p><strong>Notas:</strong> <span id="theory-notes" class="font-mono text-white">C - E - G</span></p>
+                <p><strong>Fórmula:</strong> <span id="theory-formula" class="text-purple-300">1 - 3 - 5</span></p>
+                <p id="theory-desc" class="text-slate-400 text-xs leading-relaxed border-t border-slate-800 pt-2 mt-2"></p>
             </div>
-
-            <button onclick="app.restartGame()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg mb-2 text-sm">Reintentar</button>
-            <button onclick="app.exitToMenu()" class="w-full bg-transparent hover:bg-gray-700 text-gray-400 font-bold py-2.5 rounded-lg text-sm">Salir</button>
         </div>
     </div>
 
     <script>
-        const app = (() => {
-            // --- DATOS ---
-            const SHARPS = [
-                { name: "C", group: "sharps" }, { name: "G", group: "sharps" },
-                { name: "D", group: "sharps" }, { name: "A", group: "sharps" },
-                { name: "E", group: "sharps" }, { name: "B", group: "sharps" },
-                { name: "F#", group: "sharps" }, { name: "C#", group: "sharps" }
-            ];
-            const FLATS = [
-                { name: "F", group: "flats" }, { name: "Bb", group: "flats" },
-                { name: "Eb", group: "flats" }, { name: "Ab", group: "flats" },
-                { name: "Db", group: "flats" }, { name: "Gb", group: "flats" },
-                { name: "Cb", group: "flats" }
-            ];
-            const ALL_ROOTS = [...SHARPS, ...FLATS];
+        /** ARQUITECTURA MODULAR AGILE v31.0 **/
 
-            const CHORD_DATA = {
-                "C":  { M:["E","G"], m:["Eb","G"], dim:["Eb","Gb"], aug:["E","G#"] },
-                "G":  { M:["B","D"], m:["Bb","D"], dim:["Bb","Db"], aug:["B","D#"] },
-                "D":  { M:["F#","A"], m:["F","A"], dim:["F","Ab"], aug:["F#","A#"] },
-                "A":  { M:["C#","E"], m:["C","E"], dim:["C","Eb"], aug:["C#","E#"] },
-                "E":  { M:["G#","B"], m:["G","B"], dim:["G","Bb"], aug:["G#","B#"] },
-                "B":  { M:["D#","F#"], m:["D","F#"], dim:["D","F"], aug:["D#","Fx"] },
+        // === MÓDULO 1: DATOS MUSICALES (TheoryData) ===
+        const TheoryData = {
+            sharps: ['C','G','D','A','E','B','F#','C#'],
+            flats:  ['F','Bb','Eb','Ab','Db','Gb','Cb'],
+            chromatic: ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
+            enharmonics: { 
+                "B#":"C", "E#":"F", "Cb":"B", "Fb":"E", 
+                "Db":"C#", "Eb":"D#", "Gb":"F#", "Ab":"G#", "Bb":"A#",
+                "Gx":"A", "Dx":"E", "Ax":"B", "Ex":"F#" 
+            },
+            intervals: { 'M':[4,7], 'm':[3,7], 'dim':[3,6], 'aug':[4,8] },
+            descriptions: {
+                'M': "Acorde Mayor: Sonido alegre, estable y brillante. Formado por una 3ra Mayor (4 semitonos) y una 5ta Justa (7 semitonos).",
+                'm': "Acorde Menor: Sonido triste, melancólico o serio. Formado por una 3ra Menor (3 semitonos) y una 5ta Justa.",
+                'dim': "Acorde Disminuido: Sonido tenso, inestable y de suspenso. Formado por dos 3ras Menores apiladas.",
+                'aug': "Acorde Aumentado: Sonido misterioso, espacial y onírico. Formado por dos 3ras Mayores apiladas."
+            },
+            formulas: {
+                'M': "1 - 3 - 5", 'm': "1 - b3 - 5", 'dim': "1 - b3 - b5", 'aug': "1 - 3 - #5"
+            },
+            chords: {
+                "C": { M:["E","G"], m:["Eb","G"], dim:["Eb","Gb"], aug:["E","G#"] },
+                "G": { M:["B","D"], m:["Bb","D"], dim:["Bb","Db"], aug:["B","D#"] },
+                "D": { M:["F#","A"], m:["F","A"], dim:["F","Ab"], aug:["F#","A#"] },
+                "A": { M:["C#","E"], m:["C","E"], dim:["C","Eb"], aug:["C#","E#"] },
+                "E": { M:["G#","B"], m:["G","B"], dim:["G","Bb"], aug:["G#","B#"] },
+                "B": { M:["D#","F#"], m:["D","F#"], dim:["D","F"], aug:["D#","Fx"] },
                 "F#": { M:["A#","C#"], m:["A","C#"], dim:["A","C"], aug:["A#","Cx"] },
                 "C#": { M:["E#","G#"], m:["E","G#"], dim:["E","G"], aug:["E#","Gx"] },
-                
-                "F":  { M:["A","C"], m:["Ab","C"], dim:["Ab","Cb"], aug:["A","C#"] },
+                "F": { M:["A","C"], m:["Ab","C"], dim:["Ab","Cb"], aug:["A","C#"] },
                 "Bb": { M:["D","F"], m:["Db","F"], dim:["Db","Fb"], aug:["D","F#"] },
                 "Eb": { M:["G","Bb"], m:["Gb","Bb"], dim:["Gb","Bbb"], aug:["G","B"] },
                 "Ab": { M:["C","Eb"], m:["Cb","Eb"], dim:["Cb","Ebb"], aug:["C","E"] },
                 "Db": { M:["F","Ab"], m:["Fb","Ab"], dim:["Fb","Abb"], aug:["F","A"] },
                 "Gb": { M:["Bb","Db"], m:["Bbb","Db"], dim:["Bbb","Dbb"], aug:["Bb","D"] },
                 "Cb": { M:["Eb","Gb"], m:["Ebb","Gb"], dim:["Ebb","Gbb"], aug:["Eb","G"] }
-            };
-
-            const PHYSICAL_MAP = {
-                "B#": "C", "E#": "F", "Cb": "B", "Fb": "E",
-                "Fx": "G", "Cx": "D", "Gx": "A", "Dx": "E", "Ax": "B",
-                "Bbb": "A", "Ebb": "D", "Abb": "G", "Dbb": "C", "Gbb": "F"
-            };
-
-            // --- ESTADO ---
-            let state = {
-                mode: 'M',
-                selectedRoots: ['C'], 
-                currentRoot: null,
-                currentQuality: null,
-                notesToFind: [],
-                foundThird: false,
-                foundFifth: false,
-                streak: 0,
-                bestStreak: 0,
-                bestTime: 0, // en segundos
-                startTime: 0,
-                timerId: null
-            };
-
-            // --- UI ---
-            const els = {
-                menu: document.getElementById('main-menu'),
-                game: document.getElementById('game-container'),
-                modal: document.getElementById('game-over-modal'),
-                sharpsRow: document.getElementById('sharps-row'),
-                flatsRow: document.getElementById('flats-row'),
-                nextBtn: document.getElementById('next-btn'),
-                taskTitle: document.getElementById('task-title'),
-                bar: document.getElementById('feedback-bar'),
-                timer: document.getElementById('timer-display'),
-                streak: document.getElementById('streak-display'),
-                bestStreak: document.getElementById('best-streak'),
-                bestTime: document.getElementById('best-time'),
-                modeBadge: document.getElementById('mode-badge'),
-                whiteKeys: document.querySelectorAll('.key.white'),
-                blackKeys: document.querySelectorAll('.key.black')
-            };
-
-            // --- LÓGICA CORE ---
-
-            function loadRecords() {
-                const s = localStorage.getItem('triad_best_streak');
-                const t = localStorage.getItem('triad_best_time');
-                state.bestStreak = s ? parseInt(s) : 0;
-                state.bestTime = t ? parseInt(t) : 0;
-                updateRecordsUI();
             }
+        };
 
-            function saveRecords() {
-                localStorage.setItem('triad_best_streak', state.bestStreak);
-                localStorage.setItem('triad_best_time', state.bestTime);
-                updateRecordsUI();
+        // === MÓDULO 2: SERVICIO DE AUDIO (AudioService) ===
+        const AudioService = {
+            sampler: null,
+            init: async function() {
+                if(this.sampler) return;
+                await Tone.start();
+                // Carga silenciosa (sin toast)
+                this.sampler = new Tone.Sampler({
+                    urls: { "C4":"C4.mp3", "D#4":"Ds4.mp3", "F#4":"Fs4.mp3", "A4":"A4.mp3", "C5":"C5.mp3" },
+                    release: 1, baseUrl: "https://tonejs.github.io/audio/salamander/"
+                }).toDestination();
+                this.sampler.volume.value = -5;
+            },
+            playNote: function(note, octave) {
+                if(!this.sampler) return; 
+                let phys = TheoryData.enharmonics[note] || note; 
+                this.sampler.triggerAttackRelease(phys + octave, "8n");
+            },
+            playSequence: function(notes) {
+                if(!this.sampler) return;
+                const now = Tone.now();
+                // Arpegio Ascendente
+                notes.forEach((n, i) => {
+                    let phys = TheoryData.enharmonics[n.note] || n.note;
+                    this.sampler.triggerAttackRelease(phys + n.oct, "8n", now + (i * 0.25));
+                });
+                // Acorde
+                const chord = notes.map(n => (TheoryData.enharmonics[n.note] || n.note) + n.oct);
+                this.sampler.triggerAttackRelease(chord, "2n", now + 1.0);
             }
+        };
 
-            function updateRecordsUI() {
-                els.bestStreak.textContent = state.bestStreak;
-                els.bestTime.textContent = formatTime(state.bestTime);
-            }
+        // === MÓDULO 3: VISTA DEL PIANO (PianoView) ===
+        const PianoView = {
+            container: document.getElementById('piano-inner'),
+            viewport: document.getElementById('piano-viewport'),
+            keys: [], 
 
-            function initGame(mode) {
-                state.mode = mode;
-                state.streak = 0;
-                state.selectedRoots = ['C']; 
-                
-                loadRecords();
-                
-                const modeNames = { 'M':'MAYOR', 'm':'MENOR', 'dim':'DISMINUIDA', 'aug':'AUMENTADA', 'master':'MODO MAESTRO' };
-                els.modeBadge.textContent = modeNames[mode];
-                
-                els.menu.classList.add('hidden');
-                els.game.classList.remove('hidden');
-                els.game.classList.add('flex');
-                
-                renderChunkList();
-                setupRound();
-                startTimer();
-            }
+            build: function() {
+                this.container.innerHTML = '';
+                this.keys = [];
+                const startOct = 4;
+                const totalNotes = 25; // C4 a C6
+                const WHITE_WIDTH = 64; 
+                const BLACK_WIDTH = 38; 
 
-            function exitToMenu() {
-                clearInterval(state.timerId);
-                els.game.classList.add('hidden');
-                els.game.classList.remove('flex');
-                els.menu.classList.remove('hidden');
-                els.modal.classList.add('hidden');
-                resetKeys();
-            }
+                for(let i=0; i<totalNotes; i++) {
+                    const nIdx = i % 12;
+                    const oct = startOct + Math.floor(i/12);
+                    const note = TheoryData.chromatic[nIdx];
+                    const isBlack = note.includes('#');
+                    const keyId = `${note}-${oct}`;
 
-            function restartGame() {
-                els.modal.classList.add('hidden');
-                state.streak = 0;
-                els.streak.textContent = "0";
-                startTimer();
-                setupRound();
-            }
-
-            function toggleRootSelection(rootName) {
-                const idx = state.selectedRoots.indexOf(rootName);
-                if (idx > -1) {
-                    if (state.selectedRoots.length > 1) {
-                        state.selectedRoots.splice(idx, 1);
-                    } else {
-                        return; // No vaciar
-                    }
-                } else {
-                    state.selectedRoots.push(rootName);
-                }
-                renderChunkList();
-                setupRound(); // REINICIO INMEDIATO AL CAMBIAR SELECCIÓN
-            }
-
-            function renderChunkList() {
-                els.sharpsRow.innerHTML = '';
-                els.flatsRow.innerHTML = '';
-
-                const renderBtn = (root, container) => {
-                    const isSelected = state.selectedRoots.includes(root.name);
-                    const btn = document.createElement('button');
-                    btn.onclick = () => toggleRootSelection(root.name);
-                    btn.className = `text-[10px] font-bold px-3 py-1.5 rounded border transition-all select-none `;
+                    const keyEl = document.createElement('div');
+                    keyEl.className = `key ${isBlack ? 'black' : 'white'}`;
+                    keyEl.dataset.id = keyId;
                     
-                    if (isSelected) {
-                        btn.className += `bg-blue-600 border-blue-500 text-white shadow-sm hover:bg-blue-500`;
+                    const label = document.createElement('span');
+                    label.className = 'label';
+                    label.innerText = note.replace('#','♯');
+                    keyEl.appendChild(label);
+
+                    const keyObj = { id: keyId, el: keyEl, note: note, oct: oct };
+                    this.keys.push(keyObj);
+
+                    // Evento
+                    keyEl.addEventListener('pointerup', (e) => GameCore.handleInput(keyObj));
+                    keyEl.addEventListener('pointerdown', () => keyEl.classList.add('active'));
+                    keyEl.addEventListener('pointerout', () => keyEl.classList.remove('active'));
+                    keyEl.addEventListener('pointerup', () => keyEl.classList.remove('active'));
+
+                    this.container.appendChild(keyEl);
+
+                    // Posicionamiento
+                    let whitesPassed = 0;
+                    for(let j=0; j<i; j++) { if(!TheoryData.chromatic[j%12].includes('#')) whitesPassed++; }
+
+                    if(isBlack) {
+                        let leftPos = (whitesPassed * WHITE_WIDTH) - (BLACK_WIDTH / 2);
+                        if(['C#','F#'].includes(note)) leftPos -= 4;
+                        if(['D#','A#'].includes(note)) leftPos += 4;
+                        keyEl.style.left = `${leftPos}px`;
+                        keyEl.style.width = `${BLACK_WIDTH}px`;
                     } else {
-                        btn.className += `bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300`;
+                        keyEl.style.left = `${whitesPassed * WHITE_WIDTH}px`;
+                        keyEl.style.width = `${WHITE_WIDTH}px`;
                     }
-                    btn.textContent = root.name;
+                }
+                this.setupScroll();
+            },
+
+            setupScroll: function() {
+                let isDown=false, startX, scrollLeft;
+                const vp = this.viewport;
+                vp.addEventListener('mousedown', e => { isDown=true; window.isDragging=false; vp.style.cursor='grabbing'; startX=e.pageX; scrollLeft=vp.scrollLeft; });
+                vp.addEventListener('mouseleave', () => { isDown=false; vp.style.cursor='grab'; });
+                vp.addEventListener('mouseup', () => { isDown=false; vp.style.cursor='grab'; setTimeout(()=>window.isDragging=false, 50); });
+                vp.addEventListener('mousemove', e => {
+                    if(!isDown) return;
+                    e.preventDefault();
+                    const x=e.pageX; const walk=(x-startX)*1.5;
+                    if(Math.abs(walk)>5) window.isDragging=true;
+                    vp.scrollLeft = scrollLeft - walk;
+                });
+            },
+
+            reset: function() {
+                this.keys.forEach(k => {
+                    k.el.className = k.el.classList.contains('black') ? 'key black' : 'key white';
+                    k.el.querySelector('.label').innerText = k.note.replace('#','♯');
+                });
+            },
+
+            updateLabels: function(phys, display) {
+                this.keys.filter(k => k.note === phys).forEach(k => {
+                    k.el.querySelector('.label').innerText = display;
+                });
+            },
+
+            getKey: function(phys, oct) {
+                return this.keys.find(k => k.note === phys && k.oct === oct);
+            },
+
+            scrollToKey: function(keyEl) {
+                const offset = keyEl.offsetLeft;
+                const viewportW = this.viewport.clientWidth;
+                this.viewport.scrollTo({ left: offset - (viewportW / 2) + 30, behavior: 'smooth' });
+            }
+        };
+
+        // === MÓDULO 4: SELECCIÓN (SelectionView) ===
+        const SelectionView = {
+            render: function() {
+                this.drawRow(TheoryData.sharps, document.getElementById('row-sharps'));
+                this.drawRow(TheoryData.flats, document.getElementById('row-flats'));
+            },
+            drawRow: function(list, container) {
+                container.innerHTML = '';
+                list.forEach(n => {
+                    const btn = document.createElement('div');
+                    const active = GameCore.state.pool.includes(n);
+                    btn.className = `note-toggle ${active ? 'selected' : ''}`;
+                    btn.innerText = n;
+                    btn.onclick = () => {
+                        GameCore.toggleNote(n);
+                        this.render();
+                    };
                     container.appendChild(btn);
-                };
-
-                SHARPS.forEach(r => renderBtn(r, els.sharpsRow));
-                FLATS.forEach(r => renderBtn(r, els.flatsRow));
-            }
-
-            function setupRound() {
-                const pool = ALL_ROOTS.filter(r => state.selectedRoots.includes(r.name));
-                
-                state.currentRoot = pool.length > 0 
-                    ? pool[Math.floor(Math.random() * pool.length)]
-                    : ALL_ROOTS[0];
-
-                if (state.mode === 'master') {
-                    const q = ['M', 'm', 'dim', 'aug'];
-                    state.currentQuality = q[Math.floor(Math.random() * 4)];
-                } else {
-                    state.currentQuality = state.mode;
-                }
-
-                const targetsRaw = CHORD_DATA[state.currentRoot.name][state.currentQuality];
-                const rootPhys = resolvePhysical(state.currentRoot.name);
-                const thirdPhys = resolvePhysical(targetsRaw[0]);
-                const fifthPhys = resolvePhysical(targetsRaw[1]);
-
-                state.notesToFind = [thirdPhys, fifthPhys];
-                state.foundThird = false;
-                state.foundFifth = false;
-                
-                // Reset UI
-                els.bar.style.width = '0%';
-                els.bar.className = "h-full bg-gray-600 w-0 transition-all duration-200";
-                
-                // Botón Next invisible pero ocupando espacio
-                els.nextBtn.classList.add('next-btn-placeholder');
-                els.nextBtn.classList.remove('animate-bounce'); // si hubiera
-                
-                resetKeys();
-
-                // Title
-                const suffixMap = { 'M': 'Mayor', 'm': 'Menor', 'dim': 'dim', 'aug': 'aug' };
-                const displaySuffix = suffixMap[state.currentQuality];
-                els.taskTitle.innerHTML = `<span class="text-blue-400">${state.currentRoot.name}</span> <span class="text-white ml-2 text-2xl align-middle">${displaySuffix}</span>`;
-                
-                updateKeyboardLabels(state.currentRoot.name, state.currentQuality);
-                
-                const rootKey = findKey(rootPhys);
-                if (rootKey) rootKey.classList.add('root-note');
-            }
-
-            function getAccidentalMode(rootName, quality) {
-                if (rootName.includes('b') || rootName === 'F') return true;
-                if (rootName.includes('#')) return false;
-                if (quality === 'm' || quality === 'dim') {
-                    if (['E', 'B'].includes(rootName)) return false;
-                    if (['G', 'D', 'A'].includes(rootName) && quality === 'dim') return true;
-                    if (rootName === 'C' || rootName === 'G' || rootName === 'D' || rootName === 'A' || rootName === 'F') return true;
-                }
-                return false;
-            }
-
-            function updateKeyboardLabels(rootName, quality) {
-                els.whiteKeys.forEach(k => k.textContent = k.dataset.note);
-                const useFlats = getAccidentalMode(rootName, quality);
-
-                els.blackKeys.forEach(k => {
-                    const lbl = k.querySelector('.label');
-                    lbl.textContent = useFlats ? k.dataset.flat : k.dataset.sharp;
-                });
-
-                const targets = CHORD_DATA[rootName][quality];
-                const rPhys = resolvePhysical(rootName);
-                if(rPhys !== rootName) {
-                   const k = document.getElementById(`key-${rPhys}`);
-                   if(k) k.textContent = rootName;
-                }
-                targets.forEach(tName => {
-                    const tPhys = resolvePhysical(tName);
-                    if (tPhys !== tName) {
-                        const k = document.getElementById(`key-${tPhys}`);
-                        if (k) k.textContent = tName;
-                    }
                 });
             }
+        };
 
-            function resolvePhysical(note) { return PHYSICAL_MAP[note] || note; }
-            
-            function findKey(phys) {
-                let k = document.getElementById(`key-${phys}`);
-                if (k) return k;
-                for(let bk of els.blackKeys) {
-                    if (bk.dataset.sharp === phys || bk.dataset.flat === phys) return bk;
-                }
-                return null;
-            }
-
-            function resetKeys() {
-                document.querySelectorAll('.key').forEach(k => 
-                    k.classList.remove('root-note', 'correct-note', 'wrong-note')
-                );
-            }
-
-            function handleKeyClick(e) {
-                if (state.foundThird && state.foundFifth) return;
+        // === MÓDULO 5: MODAL TEORÍA (TheoryModal) ===
+        const TheoryModal = {
+            el: document.getElementById('modal-theory'),
+            open: function() {
+                if(!GameCore.state.current) return;
+                const {name, quality, root, targets} = GameCore.state.current;
                 
-                const key = e.currentTarget;
-                if (key.classList.contains('root-note') || key.classList.contains('correct-note')) return;
+                const realNotes = [name, ...TheoryData.chords[name][quality]];
 
-                let match = false;
+                document.getElementById('theory-title').innerText = `${name} ${{'M':'Mayor','m':'Menor','dim':'Disminuido','aug':'Aumentado'}[quality]}`;
+                document.getElementById('theory-notes').innerText = realNotes.join(' - ');
+                document.getElementById('theory-formula').innerText = TheoryData.formulas[quality];
+                document.getElementById('theory-desc').innerText = TheoryData.descriptions[quality];
+                
+                this.el.classList.remove('hidden');
+            },
+            close: function() {
+                this.el.classList.add('hidden');
+            }
+        };
 
-                // Check if clicked key matches targets
-                let playedVals = key.classList.contains('white') ? [key.dataset.note] : [key.dataset.sharp, key.dataset.flat];
-                const t3 = state.notesToFind[0];
-                const t5 = state.notesToFind[1];
+        // === MÓDULO 6: CORE (GameCore) ===
+        const GameCore = {
+            state: { pool: ['C'], mode: 'M', current: null, found: [], streak: 0, locked: false },
 
-                if (playedVals.includes(t3)) { match = true; }
-                if (playedVals.includes(t5)) { match = true; }
+            init: function() {
+                PianoView.build();
+                SelectionView.render();
+            },
 
-                if (match) {
-                    key.classList.add('correct-note');
-                    
-                    if (playedVals.includes(t3)) state.foundThird = true;
-                    if (playedVals.includes(t5)) state.foundFifth = true;
+            selectMode: function(mode) {
+                // Al primer click en menú, inicializamos el audio en background
+                AudioService.init();
+                
+                this.state.mode = mode;
+                this.state.streak = 0;
+                this.state.pool = ['C'];
+                document.getElementById('ui-streak').innerText = '0';
+                SelectionView.render();
+                
+                document.getElementById('section-menu').classList.add('hidden');
+                document.getElementById('section-game').classList.remove('hidden');
+                document.getElementById('section-game').classList.add('flex');
+                this.goIdle();
+            },
 
-                    let p = 0;
-                    if(state.foundThird) p+=50;
-                    if(state.foundFifth) p+=50;
-                    els.bar.style.width = `${p}%`;
-                    
-                    if(p===100) {
-                        els.bar.className = "h-full bg-green-500 w-full transition-all duration-200 shadow-[0_0_15px_rgba(34,197,94,0.6)]";
-                        handleWin();
-                    }
+            goIdle: function() {
+                document.getElementById('state-idle').classList.remove('hidden');
+                document.getElementById('state-playing').classList.add('hidden');
+                document.getElementById('btn-theory').classList.add('hidden');
+                this.state.current = null;
+                PianoView.reset();
+                
+                // Centrar piano visualmente
+                const center = (document.getElementById('piano-inner').clientWidth - document.getElementById('piano-viewport').clientWidth) / 2;
+                document.getElementById('piano-viewport').scrollLeft = Math.max(0, center);
+            },
 
+            start: function() {
+                document.getElementById('state-idle').classList.add('hidden');
+                document.getElementById('state-playing').classList.remove('hidden');
+                document.getElementById('btn-theory').classList.remove('hidden');
+                this.nextRound();
+            },
+            
+            toggleNote: function(n) {
+                if(this.state.pool.includes(n)) {
+                    if(this.state.pool.length > 1) this.state.pool = this.state.pool.filter(x => x !== n);
                 } else {
-                    key.classList.add('wrong-note');
-                    handleLoss();
+                    this.state.pool.push(n);
                 }
-            }
+                if(this.state.current) this.goIdle();
+            },
 
-            function handleWin() {
-                state.streak++;
-                if (state.streak > state.bestStreak) {
-                    state.bestStreak = state.streak;
-                    saveRecords();
-                }
+            nextRound: function() {
+                PianoView.reset();
+                this.resetUI();
+                this.state.found = [];
+                this.state.locked = false;
+
+                const rootName = this.state.pool[Math.floor(Math.random() * this.state.pool.length)];
+                const quality = this.state.mode === 'master' ? ['M','m','dim','aug'][Math.floor(Math.random()*4)] : this.state.mode;
                 
-                // Calculo tiempo actual para record
-                const currentTime = Math.floor((Date.now() - state.startTime) / 1000);
-                if (currentTime > state.bestTime) {
-                    state.bestTime = currentTime;
-                    saveRecords();
-                }
+                const rootPhys = TheoryData.enharmonics[rootName] || rootName;
+                const rootKey = PianoView.getKey(rootPhys, 4); 
+                const rootIdx = PianoView.keys.indexOf(rootKey);
+                const targets = TheoryData.intervals[quality].map(st => PianoView.keys[rootIdx + st]);
 
-                els.streak.textContent = state.streak;
+                this.state.current = { root: rootKey, targets: targets, name: rootName, quality: quality };
+
+                const qMap = {'M':'Mayor','m':'Menor','dim':'dim','aug':'aug'};
+                document.getElementById('ui-chord-title').innerHTML = `<span class="text-blue-400">${rootName}</span> <span class="text-white">${qMap[quality]}</span>`;
                 
-                // Mostrar Botón (Quitar clase placeholder)
-                els.nextBtn.classList.remove('next-btn-placeholder');
+                if(rootPhys !== rootName) PianoView.updateLabels(rootPhys, rootName);
+                const targetNames = TheoryData.chords[rootName][quality];
+                targets.forEach((t, i) => {
+                    if(t.note !== targetNames[i]) PianoView.updateLabels(t.note, targetNames[i]);
+                });
+
+                rootKey.el.classList.add('root-note');
+                PianoView.scrollToKey(rootKey.el);
+
+                // Reproducir tónica
+                setTimeout(() => AudioService.playNote(rootKey.note, rootKey.oct), 300);
+            },
+
+            handleInput: function(keyObj) {
+                if(window.isDragging) return;
+                AudioService.playNote(keyObj.note, keyObj.oct);
+
+                if(!this.state.current || this.state.locked) return;
+
+                // Validación agnóstica de octava:
+                // Comparamos solo el NOMBRE DE LA NOTA (note), no la octava (oct)
+                const playedNote = keyObj.note;
+                const rootNote = this.state.current.root.note;
+                
+                // Si toca la tónica (en cualquier octava), no hacemos nada (ya está marcada)
+                if (playedNote === rootNote) return;
+                
+                // Extraer nombres de notas objetivo
+                const targetNotes = this.state.current.targets.map(t => t.note);
+
+                if (targetNotes.includes(playedNote)) {
+                    // Acierto
+                    // Verificar si ya encontramos esta nota (para no sumarla 2 veces si toca octava diferente)
+                    // Usamos found para guardar nombres de notas encontradas, no IDs
+                    if (!this.state.found.includes(playedNote)) {
+                        this.state.found.push(playedNote);
+                        keyObj.el.classList.add('correct-note'); // Marca visual la que tocó
+                        
+                        const pct = (this.state.found.length / 2) * 100;
+                        document.getElementById('ui-progress').style.width = `${pct}%`;
+
+                        if(this.state.found.length === 2) this.win();
+                    } else {
+                        // Ya la encontró, solo feedback visual
+                        keyObj.el.classList.add('correct-note');
+                    }
+                } else {
+                    // Error
+                    keyObj.el.classList.add('wrong-note');
+                    this.lose();
+                }
+            },
+
+            win: function() {
+                this.state.locked = true;
+                this.state.streak++;
+                document.getElementById('ui-streak').innerText = this.state.streak;
+                document.getElementById('ui-progress').className = 'h-full bg-green-500 shadow-lg transition-all';
+                
+                const notes = [this.state.current.root, ...this.state.current.targets];
+                setTimeout(() => AudioService.playSequence(notes), 200);
+                
+                this.showActionBtn('btn-next');
+            },
+
+            lose: function() {
+                this.state.locked = true;
+                this.state.streak = 0;
+                document.getElementById('ui-streak').innerText = 0;
+                document.getElementById('ui-progress').className = 'h-full bg-red-500 shadow-lg transition-all';
+                document.getElementById('ui-progress').style.width = '100%';
+
+                this.state.current.targets.forEach(t => t.el.classList.add('missed-note'));
+                
+                this.showActionBtn('btn-retry');
+            },
+
+            retryRound: function() {
+                this.nextRound();
+            },
+
+            exit: function() {
+                document.getElementById('section-game').classList.add('hidden');
+                document.getElementById('section-game').classList.remove('flex');
+                document.getElementById('section-menu').classList.remove('hidden');
+                PianoView.reset();
+                this.state.current = null;
+            },
+
+            resetUI: function() {
+                document.getElementById('ui-progress').style.width = '0%';
+                document.getElementById('ui-progress').className = 'h-full bg-blue-500 transition-all duration-200';
+                document.getElementById('btn-next').style.display = 'none';
+                document.getElementById('btn-next').classList.remove('flex');
+                document.getElementById('btn-retry').style.display = 'none';
+                document.getElementById('btn-retry').classList.remove('flex');
+            },
+
+            showActionBtn: function(id) {
+                const btn = document.getElementById(id);
+                btn.style.display = 'flex';
+                setTimeout(() => {
+                    btn.classList.remove('hidden-btn');
+                }, 50);
             }
+        };
 
-            function handleLoss() {
-                clearInterval(state.timerId);
-                document.getElementById('modal-time').textContent = els.timer.textContent;
-                document.getElementById('modal-score').textContent = state.streak;
-                els.modal.classList.remove('hidden');
-            }
-
-            function startTimer() {
-                state.startTime = Date.now();
-                clearInterval(state.timerId);
-                state.timerId = setInterval(() => {
-                    const delta = Math.floor((Date.now() - state.startTime) / 1000);
-                    els.timer.textContent = formatTime(delta);
-                }, 1000);
-            }
-
-            function formatTime(s) {
-                const m = Math.floor(s / 60).toString().padStart(2, '0');
-                const sec = (s % 60).toString().padStart(2, '0');
-                return `${m}:${sec}`;
-            }
-
-            document.querySelectorAll('.key').forEach(k => {
-                k.addEventListener('mousedown', handleKeyClick);
-                k.addEventListener('touchstart', (e) => { e.preventDefault(); handleKeyClick(e); });
-            });
-            
-            els.nextBtn.addEventListener('click', setupRound);
-
-            return { initGame, exitToMenu, restartGame, toggleRootSelection };
-        })();
+        document.addEventListener('DOMContentLoaded', () => {
+            GameCore.init();
+        });
     </script>
 </body>
 </html>
-
