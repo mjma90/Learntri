@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Master de Tríadas Pro - Agile v2.0</title>
+    <title>Master de Tríadas Pro - Agile Final</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -37,20 +37,22 @@
             touch-action: pan-x;
             scrollbar-width: none; -ms-overflow-style: none;
             box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
-            display: flex;
+            /* Centrado inicial con flex */
+            display: flex; justify-content: center;
             align-items: flex-start;
+            border-radius: 12px 12px 0 0;
         }
         .piano-viewport:active { cursor: grabbing; }
         .piano-viewport::-webkit-scrollbar { display: none; }
 
         .piano-inner {
             position: relative; height: 100%;
-            min-width: 960px; /* Ancho fijo garantizado */
+            min-width: 960px; /* Ancho fijo geométrico */
             margin: 0 auto; 
             flex-shrink: 0;
         }
         
-        /* --- 4. TECLAS --- */
+        /* --- 4. TECLAS (Z-INDEX BLINDADO) --- */
         .key { position: absolute; top: 0; cursor: pointer; transition: background-color 0.05s; }
 
         .key.white {
@@ -60,33 +62,35 @@
             box-shadow: inset 0 -8px 0 rgba(0,0,0,0.15);
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
             padding-bottom: 12px; font-weight: 800; font-size: 0.8rem;
-            z-index: 2; 
+            z-index: 1; /* Nivel Base Bajo */
         }
         .key.white:active { background-color: #e2e8f0; transform: scaleY(0.98); border-bottom: none; }
 
         .key.black {
-            height: 60%;
+            height: 55%; /* Altura ajustada para dejar ver texto */
             background: linear-gradient(to bottom, #334155 0%, #0f172a 100%);
             color: #94a3b8;
             border-radius: 0 0 5px 5px; border: 1px solid #000;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.5), inset 0 -5px 0 rgba(255,255,255,0.1);
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
             padding-bottom: 8px;
-            z-index: 10; 
+            z-index: 50; /* Nivel Base Alto (Muralla) */
         }
         .key.black .label { font-size: 0.65rem; pointer-events: none; text-align: center; width: 100%; }
         .key.black:active { background: #000; transform: scale(0.96); background-image: none; }
 
         /* --- ESTADOS --- */
-        .key.white.root-note { background-color: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 3 !important; }
-        .key.white.correct-note { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 3 !important; }
-        .key.white.wrong-note { background-color: #ef4444 !important; color: white !important; z-index: 3 !important; }
-        .key.white.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 3 !important; }
+        /* Blancas Activas: Suben a 2, JAMÁS tocan el 50 de las negras */
+        .key.white.root-note { background-color: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 2 !important; }
+        .key.white.correct-note { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 2 !important; }
+        .key.white.wrong-note { background-color: #ef4444 !important; color: white !important; z-index: 2 !important; }
+        .key.white.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 2 !important; }
 
-        .key.black.root-note { background: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 20 !important; background-image: none !important; }
-        .key.black.correct-note { background: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 20 !important; background-image: none !important; }
-        .key.black.wrong-note { background: #ef4444 !important; color: white !important; z-index: 20 !important; background-image: none !important; }
-        .key.black.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 20 !important; }
+        /* Negras Activas: Suben a 60 */
+        .key.black.root-note { background: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 60 !important; background-image: none !important; }
+        .key.black.correct-note { background: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 60 !important; background-image: none !important; }
+        .key.black.wrong-note { background: #ef4444 !important; color: white !important; z-index: 60 !important; background-image: none !important; }
+        .key.black.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 60 !important; }
 
         .key.black.root-note .label, .key.black.correct-note .label, .key.black.wrong-note .label { color: white !important; }
 
@@ -210,9 +214,9 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 3: TECLADO (Footer) -->
-        <div class="shrink-0 bg-slate-950 border-t-4 border-slate-800 relative z-10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] pb-6 pt-2">
-            <div class="px-4 sm:px-8 h-full">
+        <!-- SECCIÓN 3: TECLADO (Footer) - Con Margen Inferior y Bordes Redondeados -->
+        <div class="shrink-0 bg-slate-950 relative z-10 pb-6 px-4"> 
+            <div class="shadow-[0_10px_40px_rgba(0,0,0,0.5)] rounded-t-xl overflow-hidden border border-slate-800">
                 <div id="piano-viewport" class="piano-viewport">
                     <div id="piano-inner" class="piano-inner">
                         <!-- Las teclas se generan aquí -->
@@ -239,7 +243,7 @@
     </div>
 
     <script>
-        /** ARQUITECTURA MODULAR AGILE v31.0 **/
+        /** ARQUITECTURA MODULAR AGILE v34.0 - FIXED VALIDATION & LAYOUT **/
 
         // === MÓDULO 1: DATOS MUSICALES (TheoryData) ===
         const TheoryData = {
@@ -286,27 +290,34 @@
             init: async function() {
                 if(this.sampler) return;
                 await Tone.start();
-                // Carga silenciosa (sin toast)
+                const toast = document.getElementById('audio-toast');
+                toast.classList.add('visible');
+
                 this.sampler = new Tone.Sampler({
                     urls: { "C4":"C4.mp3", "D#4":"Ds4.mp3", "F#4":"Fs4.mp3", "A4":"A4.mp3", "C5":"C5.mp3" },
-                    release: 1, baseUrl: "https://tonejs.github.io/audio/salamander/"
+                    release: 1, baseUrl: "https://tonejs.github.io/audio/salamander/",
+                    onload: () => {
+                        this.loaded = true;
+                        toast.innerHTML = "✅ Piano Listo";
+                        setTimeout(() => toast.classList.remove('visible'), 2000);
+                    }
                 }).toDestination();
                 this.sampler.volume.value = -5;
             },
             playNote: function(note, octave) {
-                if(!this.sampler) return; 
+                if(!this.sampler) return; // Fallback silencioso si no ha cargado
                 let phys = TheoryData.enharmonics[note] || note; 
                 this.sampler.triggerAttackRelease(phys + octave, "8n");
             },
             playSequence: function(notes) {
                 if(!this.sampler) return;
                 const now = Tone.now();
-                // Arpegio Ascendente
+                // 1. Tónica -> 3ra -> 5ta
                 notes.forEach((n, i) => {
                     let phys = TheoryData.enharmonics[n.note] || n.note;
                     this.sampler.triggerAttackRelease(phys + n.oct, "8n", now + (i * 0.25));
                 });
-                // Acorde
+                // 2. Acorde
                 const chord = notes.map(n => (TheoryData.enharmonics[n.note] || n.note) + n.oct);
                 this.sampler.triggerAttackRelease(chord, "2n", now + 1.0);
             }
@@ -321,8 +332,9 @@
             build: function() {
                 this.container.innerHTML = '';
                 this.keys = [];
+                
                 const startOct = 4;
-                const totalNotes = 25; // C4 a C6
+                const totalNotes = 25; // C4 a C6 (2 octavas)
                 const WHITE_WIDTH = 64; 
                 const BLACK_WIDTH = 38; 
 
@@ -345,7 +357,7 @@
                     const keyObj = { id: keyId, el: keyEl, note: note, oct: oct };
                     this.keys.push(keyObj);
 
-                    // Evento
+                    // Evento de toque (Input desacoplado)
                     keyEl.addEventListener('pointerup', (e) => GameCore.handleInput(keyObj));
                     keyEl.addEventListener('pointerdown', () => keyEl.classList.add('active'));
                     keyEl.addEventListener('pointerout', () => keyEl.classList.remove('active'));
@@ -368,6 +380,7 @@
                         keyEl.style.width = `${WHITE_WIDTH}px`;
                     }
                 }
+                
                 this.setupScroll();
             },
 
@@ -398,11 +411,7 @@
                     k.el.querySelector('.label').innerText = display;
                 });
             },
-
-            getKey: function(phys, oct) {
-                return this.keys.find(k => k.note === phys && k.oct === oct);
-            },
-
+            
             scrollToKey: function(keyEl) {
                 const offset = keyEl.offsetLeft;
                 const viewportW = this.viewport.clientWidth;
@@ -437,20 +446,16 @@
             el: document.getElementById('modal-theory'),
             open: function() {
                 if(!GameCore.state.current) return;
-                const {name, quality, root, targets} = GameCore.state.current;
-                
+                const {name, quality} = GameCore.state.current;
                 const realNotes = [name, ...TheoryData.chords[name][quality]];
 
                 document.getElementById('theory-title').innerText = `${name} ${{'M':'Mayor','m':'Menor','dim':'Disminuido','aug':'Aumentado'}[quality]}`;
                 document.getElementById('theory-notes').innerText = realNotes.join(' - ');
                 document.getElementById('theory-formula').innerText = TheoryData.formulas[quality];
                 document.getElementById('theory-desc').innerText = TheoryData.descriptions[quality];
-                
                 this.el.classList.remove('hidden');
             },
-            close: function() {
-                this.el.classList.add('hidden');
-            }
+            close: function() { this.el.classList.add('hidden'); }
         };
 
         // === MÓDULO 6: CORE (GameCore) ===
@@ -463,9 +468,7 @@
             },
 
             selectMode: function(mode) {
-                // Al primer click en menú, inicializamos el audio en background
-                AudioService.init();
-                
+                AudioService.init(); // Despertar audio
                 this.state.mode = mode;
                 this.state.streak = 0;
                 this.state.pool = ['C'];
@@ -485,12 +488,13 @@
                 this.state.current = null;
                 PianoView.reset();
                 
-                // Centrar piano visualmente
+                // Centrar piano
                 const center = (document.getElementById('piano-inner').clientWidth - document.getElementById('piano-viewport').clientWidth) / 2;
                 document.getElementById('piano-viewport').scrollLeft = Math.max(0, center);
             },
 
             start: function() {
+                AudioService.init();
                 document.getElementById('state-idle').classList.add('hidden');
                 document.getElementById('state-playing').classList.remove('hidden');
                 document.getElementById('btn-theory').classList.remove('hidden');
@@ -509,14 +513,14 @@
             nextRound: function() {
                 PianoView.reset();
                 this.resetUI();
-                this.state.found = [];
+                this.state.found = []; // Notas encontradas
                 this.state.locked = false;
 
                 const rootName = this.state.pool[Math.floor(Math.random() * this.state.pool.length)];
                 const quality = this.state.mode === 'master' ? ['M','m','dim','aug'][Math.floor(Math.random()*4)] : this.state.mode;
                 
                 const rootPhys = TheoryData.enharmonics[rootName] || rootName;
-                const rootKey = PianoView.getKey(rootPhys, 4); 
+                const rootKey = PianoView.keys.find(k => k.note === rootPhys && k.oct === 4); 
                 const rootIdx = PianoView.keys.indexOf(rootKey);
                 const targets = TheoryData.intervals[quality].map(st => PianoView.keys[rootIdx + st]);
 
@@ -534,7 +538,6 @@
                 rootKey.el.classList.add('root-note');
                 PianoView.scrollToKey(rootKey.el);
 
-                // Reproducir tónica
                 setTimeout(() => AudioService.playNote(rootKey.note, rootKey.oct), 300);
             },
 
@@ -544,35 +547,26 @@
 
                 if(!this.state.current || this.state.locked) return;
 
-                // Validación agnóstica de octava:
-                // Comparamos solo el NOMBRE DE LA NOTA (note), no la octava (oct)
-                const playedNote = keyObj.note;
-                const rootNote = this.state.current.root.note;
+                // CORRECCIÓN DE VALIDACIÓN: Ignora octava para tónica
+                if(keyObj.note === this.state.current.root.note) return; 
                 
-                // Si toca la tónica (en cualquier octava), no hacemos nada (ya está marcada)
-                if (playedNote === rootNote) return;
-                
-                // Extraer nombres de notas objetivo
+                // Ignorar si ya se encontró
+                if(this.state.found.includes(keyObj.note)) return;
+
+                // CORRECCIÓN VALIDACIÓN: Buscar por nombre de nota (agnóstico de octava)
                 const targetNotes = this.state.current.targets.map(t => t.note);
+                
+                if(targetNotes.includes(keyObj.note)) {
+                    // Correcto
+                    keyObj.el.classList.add('correct-note');
+                    this.state.found.push(keyObj.note);
+                    
+                    const pct = (this.state.found.length / 2) * 100;
+                    document.getElementById('ui-progress').style.width = `${pct}%`;
 
-                if (targetNotes.includes(playedNote)) {
-                    // Acierto
-                    // Verificar si ya encontramos esta nota (para no sumarla 2 veces si toca octava diferente)
-                    // Usamos found para guardar nombres de notas encontradas, no IDs
-                    if (!this.state.found.includes(playedNote)) {
-                        this.state.found.push(playedNote);
-                        keyObj.el.classList.add('correct-note'); // Marca visual la que tocó
-                        
-                        const pct = (this.state.found.length / 2) * 100;
-                        document.getElementById('ui-progress').style.width = `${pct}%`;
-
-                        if(this.state.found.length === 2) this.win();
-                    } else {
-                        // Ya la encontró, solo feedback visual
-                        keyObj.el.classList.add('correct-note');
-                    }
+                    if(this.state.found.length === 2) this.win();
                 } else {
-                    // Error
+                    // Incorrecto
                     keyObj.el.classList.add('wrong-note');
                     this.lose();
                 }
@@ -597,6 +591,7 @@
                 document.getElementById('ui-progress').className = 'h-full bg-red-500 shadow-lg transition-all';
                 document.getElementById('ui-progress').style.width = '100%';
 
+                // Mostrar solución
                 this.state.current.targets.forEach(t => t.el.classList.add('missed-note'));
                 
                 this.showActionBtn('btn-retry');
