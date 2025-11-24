@@ -10,24 +10,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 1. BASE (Permitir Scroll Vertical) --- */
+        /* --- 1. BASE --- */
         :root {
-            --piano-height: 240px;
+            --piano-height: 35dvh;
         }
 
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #020617; 
-            /* Permitir scroll vertical si el contenido es alto */
-            overflow-y: auto; 
-            overflow-x: hidden;
-            /* Permitir gestos de pan vertical */
-            touch-action: pan-y; 
+            overflow: hidden; 
+            touch-action: none;
             user-select: none; -webkit-user-select: none;
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
+            height: 100dvh; 
+            width: 100vw;
         }
 
         /* --- 2. ANIMACIONES --- */
@@ -43,11 +38,13 @@
         .piano-wrapper-outer {
             width: 100%;
             height: var(--piano-height);
+            min-height: 140px; 
+            max-height: 280px;
             background: #0f172a;
             border-top: 4px solid #1e293b;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
             padding-bottom: env(safe-area-inset-bottom);
-            flex-shrink: 0; /* Evita que se aplaste */
+            flex-shrink: 0;
         }
 
         .piano-viewport {
@@ -55,18 +52,18 @@
             height: 100%;
             position: relative; cursor: grab; 
             overflow-x: auto; overflow-y: hidden;
-            /* Pan-x permite mover el piano horizontalmente sin scrollear la página */
-            touch-action: pan-x; 
+            touch-action: pan-x;
             scrollbar-width: none; -ms-overflow-style: none;
             box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
-            display: flex; align-items: flex-start;
+            display: flex; 
+            align-items: flex-start;
         }
         .piano-viewport:active { cursor: grabbing; }
         .piano-viewport::-webkit-scrollbar { display: none; }
 
         .piano-inner {
             position: relative; height: 100%;
-            min-width: 960px; /* Ancho fijo para 15 teclas */
+            min-width: 960px; 
             margin: 0 auto; 
             flex-shrink: 0;
         }
@@ -80,40 +77,41 @@
             border-radius: 0 0 6px 6px; border: 1px solid #cbd5e1; border-top: none;
             box-shadow: inset 0 -8px 0 rgba(0,0,0,0.15);
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 12px; font-weight: 800; font-size: 0.8rem;
-            z-index: 2; 
+            padding-bottom: 10%; 
+            font-weight: 800; font-size: 0.8rem;
+            z-index: 1; 
         }
         .key.white:active { background-color: #e2e8f0; transform: scaleY(0.98); border-bottom: none; }
 
         .key.black {
-            height: 55%; /* Altura ajustada */
+            height: 60%;
             background: linear-gradient(to bottom, #334155 0%, #0f172a 100%);
             color: #94a3b8;
             border-radius: 0 0 5px 5px; border: 1px solid #000;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.5), inset 0 -5px 0 rgba(255,255,255,0.1);
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 8px;
-            z-index: 10; 
+            padding-bottom: 5px;
+            z-index: 50; 
         }
         .key.black .label { font-size: 0.65rem; pointer-events: none; text-align: center; width: 100%; }
         .key.black:active { background: #000; transform: scale(0.96); background-image: none; }
 
         /* --- ESTADOS --- */
-        .key.white.root-note { background-color: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 3 !important; }
-        .key.white.correct-note { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 3 !important; }
-        .key.white.wrong-note { background-color: #ef4444 !important; color: white !important; z-index: 3 !important; }
-        .key.white.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 3 !important; }
+        .key.white.root-note { background-color: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 2 !important; }
+        .key.white.correct-note { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 2 !important; }
+        .key.white.wrong-note { background-color: #ef4444 !important; color: white !important; z-index: 2 !important; }
+        .key.white.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 2 !important; }
 
-        .key.black.root-note { background: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 20 !important; background-image: none !important; }
-        .key.black.correct-note { background: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 20 !important; background-image: none !important; }
-        .key.black.wrong-note { background: #ef4444 !important; color: white !important; z-index: 20 !important; background-image: none !important; }
-        .key.black.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 20 !important; }
+        .key.black.root-note { background: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px #3b82f6; z-index: 60 !important; background-image: none !important; }
+        .key.black.correct-note { background: #22c55e !important; color: white !important; box-shadow: 0 0 15px #22c55e; z-index: 60 !important; background-image: none !important; }
+        .key.black.wrong-note { background: #ef4444 !important; color: white !important; z-index: 60 !important; background-image: none !important; }
+        .key.black.missed-note { animation: pulse-error 0.8s infinite; border: 2px solid #ef4444 !important; z-index: 60 !important; }
 
         .key.black.root-note .label, .key.black.correct-note .label, .key.black.wrong-note .label { color: white !important; }
 
         /* --- UI --- */
         .selection-row { display: flex; flex-wrap: nowrap; gap: 0.5rem; width: 100%; overflow-x: auto; justify-content: center; padding-bottom: 4px; }
-        @media (max-width: 640px) { .selection-row { justify-content: flex-start; padding-left: 10px; padding-right: 10px; } }
+        @media (max-width: 768px) { .selection-row { justify-content: flex-start; padding-left: 0.5rem; padding-right: 0.5rem; } }
         .selection-row::-webkit-scrollbar { display: none; }
 
         .note-toggle {
@@ -132,6 +130,15 @@
 
         .toast { position: fixed; bottom: 30px; right: 30px; background: rgba(15, 23, 42, 0.95); color: #4ade80; padding: 12px 20px; border-radius: 30px; font-size: 12px; font-weight: bold; z-index: 100; pointer-events: none; opacity: 0; transition: opacity 0.5s; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px; }
         .toast.visible { opacity: 1; }
+
+        /* Optimización Paisaje (Landscape) en Móvil */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .piano-viewport { height: 45vh; min-height: 120px; }
+            .key.white { font-size: 0.7rem; padding-bottom: 4px; }
+            #ui-chord-title { font-size: 2.5rem; margin-bottom: 0.5rem; }
+            .header-compact { padding: 0.5rem; }
+            .hide-landscape { display: none; }
+        }
     </style>
 </head>
 <body class="text-white flex flex-col min-h-screen bg-gray-950">
@@ -143,7 +150,7 @@
     </div>
 
     <!-- SECCIÓN 1: MENÚ PRINCIPAL -->
-    <div id="section-menu" class="flex-1 flex flex-col p-4 max-w-4xl mx-auto w-full justify-center fade-in">
+    <div id="section-menu" class="flex-1 flex flex-col p-4 max-w-4xl mx-auto w-full h-full overflow-y-auto justify-center fade-in">
         <div class="text-center mb-6 md:mb-10 mt-8">
             <h1 class="text-4xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-purple-600 mb-4">
                 Master de Tríadas
@@ -177,10 +184,10 @@
     </div>
 
     <!-- SECCIÓN 2: ÁREA DE JUEGO -->
-    <div id="section-game" class="hidden flex-col h-full bg-slate-900 relative min-h-screen">
+    <div id="section-game" class="hidden flex-col h-full bg-slate-900 relative">
         
         <!-- Header -->
-        <div class="bg-slate-900/90 border-b border-slate-700 p-4 flex justify-between items-center shadow-lg z-30 shrink-0">
+        <div class="bg-slate-900/90 border-b border-slate-700 p-4 flex justify-between items-center shadow-lg z-30 shrink-0 header-compact">
             <button onclick="GameCore.exit()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 px-4 rounded-lg transition-colors border border-slate-700">⬅ SALIR</button>
             <div class="flex gap-4 text-center">
                 <button onclick="TheoryModal.open()" id="btn-theory" class="hidden bg-purple-900/50 hover:bg-purple-800 text-purple-300 text-[10px] font-bold py-1.5 px-3 rounded border border-purple-700 transition-colors">
@@ -191,41 +198,43 @@
         </div>
 
         <!-- Panel de Selección (Notas) -->
-        <div class="bg-slate-900/95 border-b border-slate-800 p-4 z-20 shadow-md shrink-0">
-            <div class="text-center text-[10px] text-slate-400 font-bold uppercase mb-3 tracking-widest">Elige los acordes</div>
-            <div class="flex flex-col gap-3 w-full overflow-hidden">
+        <div class="bg-slate-900/95 border-b border-slate-800 p-3 z-20 shadow-md shrink-0">
+            <div class="text-center text-[9px] text-slate-400 font-bold uppercase mb-2 tracking-widest hide-landscape">Elige los acordes</div>
+            <div class="flex flex-col gap-2 w-full overflow-hidden">
                 <div id="row-sharps" class="selection-row"></div>
                 <div id="row-flats" class="selection-row"></div>
             </div>
         </div>
 
-        <!-- Área Central (Flex Grow) -->
+        <!-- Área Central -->
         <div class="flex-1 flex flex-col items-center justify-center p-4 relative overflow-y-auto">
             
             <!-- Estado: IDLE (Botón Iniciar) -->
             <div id="state-idle" class="text-center w-full fade-in py-8">
-                <button onclick="GameCore.start()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 px-16 rounded-2xl shadow-xl shadow-blue-900/40 text-2xl transition-transform active:scale-95">
+                <button onclick="GameCore.start()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 px-16 rounded-2xl shadow-xl shadow-blue-900/40 text-xl md:text-2xl transition-transform active:scale-95">
                     INICIAR
                 </button>
             </div>
 
             <!-- Estado: PLAYING (Juego Activo) -->
-            <div id="state-playing" class="hidden flex-col items-center w-full max-w-md py-4">
-                <h2 class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-2">ARMA EL ACORDE</h2>
-                <div id="ui-chord-title" class="text-5xl md:text-7xl font-black text-white mb-4 drop-shadow-2xl select-none">C</div>
+            <!-- Se agregó flex flex-col items-center justify-center para centrado absoluto -->
+            <div id="state-playing" class="hidden flex flex-col items-center justify-center w-full max-w-md py-4">
+                <h2 class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-2 hide-landscape">ARMA EL ACORDE</h2>
+                <div id="ui-chord-title" class="text-5xl md:text-7xl font-black text-white mb-4 drop-shadow-2xl select-none transition-all text-center">C</div>
                 
                 <!-- Barra de Progreso -->
                 <div class="h-3 w-full max-w-[240px] mx-auto bg-slate-800 rounded-full overflow-hidden border border-slate-700 mb-6 shadow-inner">
                     <div id="ui-progress" class="h-full bg-blue-500 w-0 transition-all duration-200"></div>
                 </div>
 
-                <!-- Botones de Acción -->
+                <!-- Botones de Acción Centrados -->
                 <div class="h-16 flex justify-center items-center gap-4 w-full">
-                    <button id="btn-next" onclick="GameCore.nextRound()" class="action-btn hidden-btn bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-green-900/50 text-sm w-full max-w-[200px]">
+                    <!-- Agregado flex justify-center items-center a los botones -->
+                    <button id="btn-next" onclick="GameCore.nextRound()" class="action-btn hidden-btn bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-green-900/50 text-sm w-full max-w-[200px] flex justify-center items-center gap-2">
                         SIGUIENTE ➡
                     </button>
-                    <button id="btn-retry" onclick="GameCore.retryRound()" class="action-btn hidden-btn bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-red-900/50 text-sm w-full max-w-[200px]">
-                        REINTENTAR ↺
+                    <button id="btn-retry" onclick="GameCore.retryRound()" class="action-btn hidden-btn bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-red-900/50 text-sm w-full max-w-[200px] flex justify-center items-center gap-2">
+                        INTENTAR DE NUEVO ↺
                     </button>
                 </div>
             </div>
@@ -260,7 +269,7 @@
     </div>
 
     <script>
-        /** ARQUITECTURA MODULAR AGILE v36.0 - RESPONSIVE SCROLL VERTICAL **/
+        /** ARQUITECTURA MODULAR AGILE v37.0 - CENTRADO PERFECTO **/
 
         // === MÓDULO 1: DATOS MUSICALES (TheoryData) ===
         const TheoryData = {
@@ -423,6 +432,10 @@
                 });
             },
 
+            getKey: function(phys, oct) {
+                return this.keys.find(k => k.note === phys && k.oct === oct);
+            },
+
             scrollToKey: function(keyEl) {
                 const offset = keyEl.offsetLeft;
                 const viewportW = this.viewport.clientWidth;
@@ -559,7 +572,7 @@
 
                 if(!this.state.current || this.state.locked) return;
 
-                if(keyObj.note === this.state.current.root.note) return; 
+                if(keyObj.note === this.state.current.root.note) return;
 
                 const targetNotes = this.state.current.targets.map(t => t.note);
                 
